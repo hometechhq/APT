@@ -199,3 +199,100 @@ flowchart TD
 
 
 ```
+
+## 2) What’s New in this Version
+
+This version represents a major step forward from earlier iterations of AI Dev Tasks.  
+The core updates are:
+
+- **Four-Phase Lifecycle**  
+  Previously the lifecycle was 3 phases. We now explicitly split out a **Dependency Prep Phase** between Design and Integration.  
+  • Design → Dependency Prep → Integration → Deployment.  
+  • This ensures Integration only begins once all external prerequisites are confirmed ready.
+
+- **Dual-Audience Design Deliverables**  
+  The Design Phase now always produces:  
+  • **Human-oriented documentation** (`/design/docs/<feature>.md`) for stakeholders to read, understand, and approve.  
+  • **Machine-oriented JSON artifacts** (`/design/*.json`) that validate against strict schemas for automation.  
+  Stakeholders get clarity up front; AI agents get precise execution contracts.
+
+- **Expanded Design Agents**  
+  Design Phase is modular, with specialized agents covering:  
+  • Product Research & Prospectus (including margin analysis),  
+  • Backend Design, Frontend Design, Architecture, Identity, Data Flows,  
+  • Planner for the execution DAG.  
+  Each agent works iteratively, so the design spec grows step by step with human review.
+
+- **Dependency Management**  
+  New `dependencies.json` artifact and *Dependencies Checklist* section in the human doc.  
+  Humans confirm availability of libraries, services, APIs, credentials, or infra before Integration starts.  
+  Tasks in `plan.json` now explicitly reference these dependencies.
+
+- **Clearer Integration Loop**  
+  Integration Phase now lists Manager, Implementor, Reviewer, and CI as distinct agents/steps, each with specific responsibilities.  
+  Escalation paths (e.g., `nano → mini → pro` model tiers) are explicitly documented.
+
+- **Deployment Agents and Safeguards**  
+  Deployment Phase now specifies:  
+  • CD Manager, Deployer, DBA, Tester, SRE Reviewer.  
+  • Deliverables: `DeployEnvelope`, `DBChangeEnvelope`, `TestReport`.  
+  • Environment-by-environment promotion (dev → test → stage → prod) with rollback, retries, and manual holds.
+
+- **Auditability and Resume Safety**  
+  • All artifacts are committed to `/design/` and `/state/` with strict schema validation.  
+  • Integration and Deployment can be restarted at any time and will resume from the last known state.  
+  • Human gates (reviews, approvals, pre-flight checks) are explicit in the workflow and visible in the Mermaid diagram.
+
+## 3) Architecture at a Glance
+
+At the highest level, the system flows like this:
+
+- **Human requester** submits an idea.  
+- **Design Phase agents** (Research, Backend, Frontend, Architect, Identity, Data Flow, Planner) build out stakeholder documentation and JSON contracts.  
+- **Humans review and approve** the design sections.  
+- **Dependency Prep** ensures external services, APIs, libraries, credentials, and infra are available.  
+- **Integration Phase agents** (Manager → Implementor → Reviewer → CI) turn the plan into commits, one task at a time, with CI gating and resumable state.  
+- **Deployment Phase agents** (CD Manager → Deployer → DBA → Tester → SRE Reviewer) promote the artifact through dev → test → stage → prod, with tests, health checks, rollbacks, and human approvals where required.  
+
+### Simplified flow
+
+```mermaid
+flowchart TD
+  HR[Human Requester] --> DAgents[Design Phase Agents]
+  DAgents --> Docs[Human docs for stakeholders]
+  DAgents --> JSON[Machine JSON artifacts]
+  Docs --> HReview[Human Review and Approval]
+  HReview -->|approve| DesignOK[Design Approved]
+
+  DesignOK --> DepPrep[Dependency Prep Phase]
+  DepPrep --> Checklist[Dependencies checklist + dependencies.json]
+  Checklist --> DepReady[Dependencies ready]
+
+  DepReady --> Manager[Integration Manager Agent]
+  Manager --> Implementor[Implementor Agent]
+  Implementor --> CI[CI: lint, tests, build]
+  CI --> Reviewer[Reviewer Agent]
+  Reviewer -->|approved| Commit[Commit per task + update plan.json]
+  Reviewer -->|needs changes / escalate| Implementor
+  Commit --> MoreTasks{More tasks?}
+  MoreTasks -- yes --> Manager
+  MoreTasks -- no --> IntegrationDone[Integration Complete]
+
+  IntegrationDone --> CDManager[CD Manager Agent]
+  CDManager --> Deployer[Deployer Agent]
+  Deployer --> DBA[DBA Agent (if DB changes)]
+  DBA --> Tester[Tester Agent]
+  Deployer --> Tester
+  Tester --> Tests[Run tests + produce TestReports]
+  Tests --> Health[Run health checks]
+  Health --> SRE[SRE Reviewer Agent]
+
+  SRE -->|promote| NextEnv{More environments?}
+  NextEnv -- yes --> CDManager
+  NextEnv -- no --> ReleaseDone[Release Complete in Prod]
+  SRE -->|retry| Deployer
+  SRE -->|rollback| Rollback[Rollback executed] --> CDManager
+  SRE -->|hold| HumanApproval[Human approval required] --> CDManager
+```
+
+This diagram is a simplified overview — each box represents either a human touch point, an AI agent, or an orchestrator step. The details of roles, artifacts, and iteration are fully described in Section 1.
