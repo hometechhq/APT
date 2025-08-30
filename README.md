@@ -185,10 +185,10 @@ flowchart TD
     Health --> SRE[SRE Reviewer Agent decides]
     SRE -->|promote| NextEnv{More environments?}
     NextEnv -- yes --> CDM
-    NextEnv -- no --> ReleaseDone[Release complete (prod)]
+    NextEnv -- no --> ReleaseDone[Release complete prod]
     SRE -->|retry| Deployer
     SRE -->|rollback| Rollback[Orchestrator executes rollback plan] --> CDM
-    SRE -->|hold (HUMAN APPROVAL)| HumanApprove[Human approval]:::human --> CDM
+    SRE -->|hold HUMAN APPROVAL| HumanApprove[Human approval]:::human --> CDM
 
     IntDone --> CDM
   end
