@@ -548,3 +548,118 @@ flowchart LR
 
   style Review fill:#fff6d5,stroke:#d4a300,color:#3d2e00
 ```
+
+## 8) n8n Orchestration Notes
+
+n8n is the orchestrator that coordinates all agents and enforces quality gates.  
+Agents **plan** in JSON; n8n **executes** side effects and maintains state.
+
+### 8.1 Responsibilities of n8n
+
+- **Design Phase**
+  - Hosts prompt templates for ChatGPT sessions (under `/docs/planning/`).
+  - Collects outputs into `/design/` and does not perform side effects beyond storing artifacts.
+
+- **Dependency Prep Phase**
+  - Reads `/design/dependencies.json` and **blocks Integration** until required items are `available`.
+  - Surfaces `manual` dependencies for human resolution.
+
+- **Integration Phase**
+  - Runs the **Manager → Implementor → CI → Reviewer** loop:
+    - Load `plan.json`, pick next pending task with deps satisfied.
+    - Call Implementor model; validate **ReturnEnvelope** against `/specs/ReturnEnvelope.schema.json`.
+    - Apply files safely, run CI gates, ask Reviewer for verdict.
+    - Update `plan.json`; write runtime envelopes into `/state/runs/`.
+  - Handles retries and **model tier escalation** `nano → mini → pro`.
+  - Ensures **resume safety** by always deriving next work from the latest plan state.
+
+- **Deployment Phase**
+  - Runs the **CD Manager → Deployer → DBA → Tester → SRE Reviewer** loop:
+    - Read `cd/release.json`, select next environment in order.
+    - Execute deploy steps, DB migrations, test suites, and health checks.
+    - Capture outputs to `/state/cd/<run-id>/<env>/` and honor rollback plans and holds.
+
+### 8.2 Human Gates
+
+- **Design review** in `/design/docs/<feature>.md`.
+- **Preflight dependency check** in `/design/dependencies.json`.
+- **Reviewer escalations** if tasks persistently fail or require clarification.
+- **Deployment holds** when `hold_for_approval` is true.
+
+---
+
+### 8.3 Integration orchestration in n8n
+
+```mermaid
+flowchart TD
+
+  T1[Trigger manual or schedule] --> F1[Function load design plan json]
+  F1 --> F2[Function select first pending task with deps satisfied]
+  F2 -->|task found| S1[Set task context id acceptance routing selectors]
+  F2 -->|none found| E0[Stop integration complete]
+
+  S1 --> F3[Function gather code excerpts by selectors]
+  F3 --> B1[Function build implementor prompt system and user messages]
+  B1 --> O1[OpenAI Chat call implementor agent return ReturnEnvelope json]
+  O1 --> V1[Function validate json against ReturnEnvelope schema]
+  V1 -->|invalid| R1[Set retry and repair request] --> O1
+
+  V1 --> W1[Write Binary write envelope to state runs]
+  W1 --> X1[Execute Command apply envelope apply envelope mjs]
+  X1 --> CI1[Execute Command run CI lint tests build]
+  CI1 --> O2[OpenAI Chat call reviewer agent verdict]
+
+  O2 -->|approved| U1[Function update plan json mark task completed]
+  O2 -->|needs changes| R2[Set reviewer notes for implementor] --> O1
+  O2 -->|escalate| R3[Set routing escalate nano to mini to pro] --> O1
+  CI1 -->|fail| R4[Set CI failure hints] --> O1
+
+  U1 --> IF1{More tasks}
+  IF1 -- yes --> F2
+  IF1 -- no --> E0[Stop integration complete]
+```
+
+---
+
+### 8.4 Deployment orchestration in n8n
+
+```mermaid
+flowchart TD
+
+  T2[Trigger manual or post integration] --> F10[Function load cd release json]
+  F10 --> O10[OpenAI Chat call CD manager decide action]
+  O10 -->|done| E9[Stop deployment complete]
+  O10 -->|hold| H1[Wait human approval] --> F10
+  O10 -->|promote env| S10[Set target environment]
+
+  S10 --> O11[OpenAI Chat call deployer plan deploy envelope]
+  O11 --> X10[Execute Command run deployment helm or commands]
+  X10 --> IFDB{Database changes}
+  IFDB -- yes --> O12[OpenAI Chat call DBA plan db changes] --> X11[Execute Command backup db] --> X12[Execute Command migrate db] --> J10[Join continue]
+  IFDB -- no --> J10[Join continue]
+
+  J10 --> O13[OpenAI Chat call tester plan test suites]
+  O13 --> X13[Execute Command run tests write TestReports]
+  X13 --> X14[Execute Command run health checks write health report]
+  X14 --> O14[OpenAI Chat call SRE reviewer verdict]
+
+  O14 -->|promote| F11[Function mark environment completed] --> F10
+  O14 -->|retry| R10[Set retry deploy] --> O11
+  O14 -->|rollback| X15[Execute Command run rollback plan] --> F10
+  O14 -->|hold| H2[Wait human approval] --> F10
+```
+
+---
+
+### 8.5 Node Type Legend
+
+- **Trigger** → starts the workflow manually or on a schedule.  
+- **Function** → JavaScript code block for selection, transformation, or validation.  
+- **Set** → creates or mutates fields used later in the flow.  
+- **IF** → branching based on a condition or presence of data.  
+- **OpenAI Chat** → calls a model using system and user messages; expects fenced JSON output.  
+- **HTTP Request** → call out to external services if needed.  
+- **Execute Command** → runs a shell command or script on the runner.  
+- **Write Binary** → persists a file to disk (e.g., envelopes under `/state/`).  
+- **Wait** → pause for a human approval or a timed delay.  
+- **Stop** → clean termination of the flow when no further work is needed.
