@@ -101,7 +101,7 @@
 
 ### Why this exists
 - To connect **business viability** (prospectus with explicit margins) → **technical design** (backend, frontend, architecture, identity, data flows, dependencies) → **delivery** (integration and deployment) with safety and predictability.
-
+```mermaid
 flowchart TD
   %% ===== STYLE / LEGEND =====
   classDef human fill:#fff6d5,stroke:#d4a300,stroke-width:1px,color:#3d2e00;
@@ -181,3 +181,4 @@ flowchart TD
   HREQ --> D1a
   INT_DONE --> CDM
   DEP_OK --> MGR
+```
