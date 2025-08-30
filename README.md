@@ -280,7 +280,7 @@ flowchart TD
 
   IntegrationDone --> CDManager[CD Manager Agent]
   CDManager --> Deployer[Deployer Agent]
-  Deployer --> DBA[DBA Agent (if DB changes)]
+  Deployer --> DBA[DBA Agent if DB changes]
   DBA --> Tester[Tester Agent]
   Deployer --> Tester
   Tester --> Tests[Run tests + produce TestReports]
