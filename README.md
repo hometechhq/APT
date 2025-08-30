@@ -295,3 +295,256 @@ Each phase has **clear roles**, **human touch points**, and **explicit artifacts
 - **Deployment** → `release.json` plus per-environment DeployEnvelope, DBChangeEnvelope, TestReports, and logs in `/state/cd/`.
 
 Together, these artifacts make the process **predictable, auditable, and resumable** from idea through production.
+
+## 4) State & Idempotency
+
+A core design principle of AI Dev Tasks is that **every phase is resumable** and **every action is idempotent**.  
+This means the workflow can be stopped and restarted without losing progress, and repeated actions do not create conflicts or duplication.
+
+### 4.1 State Tracking
+
+Each phase maintains explicit state in versioned or gitignored artifacts:
+
+- **Design Phase**  
+  - Human docs: `/design/docs/<feature>.md`  
+  - JSON specs: `/design/*.json` (e.g., `research.json`, `backend.json`, `frontend.json`, `plan.json`)  
+  - Status: stakeholder approval recorded in the doc itself and in commits.
+
+- **Dependency Prep Phase**  
+  - `/design/dependencies.json` — structured list of prerequisites with status.  
+  - Updates: as dependencies move from `missing` → `available`, the file is updated and committed.
+
+- **Integration Phase**  
+  - `/design/plan.json` — authoritative task plan; each task has `status` = `pending`, `in_progress`, `completed`, or `skipped`.  
+  - `/state/runs/<run-id>/task-<id>.json` (gitignored) — snapshot of every ReturnEnvelope generated for a task.  
+  - Git commits — exactly one per completed task on the feature branch.  
+
+- **Deployment Phase**  
+  - `/cd/release.json` — authoritative ReleasePlan.  
+  - `/state/cd/<run-id>/<env>/deploy.json` — DeployEnvelope.  
+  - `/state/cd/<run-id>/<env>/db.json` — DBChangeEnvelope.  
+  - `/state/cd/<run-id>/<env>/tests.json` — TestReports.  
+  - Logs/artifacts — captured alongside JSON under `/state/cd/<run-id>/<env>/`.
+
+### 4.2 Idempotency Rules
+
+- **Tasks (Integration)**  
+  - Each task includes an `idempotency_signature` in `plan.json` (e.g., “`POST /login` returns 200” or “function `hashPassword` exists in `auth.js`”).  
+  - If the Implementor finds this condition already satisfied, it may set `idempotent_satisfied=true` in the ReturnEnvelope and produce no changes.  
+  - Manager marks such tasks as `skipped` instead of re-running them.
+
+- **Database changes (Deployment)**  
+  - Each migration in `release.json` includes `up` and `down` commands.  
+  - Pre- and post-checks confirm whether the migration is already applied.  
+  - If already applied, DBA agent marks migration as `skipped`.  
+  - If failure occurs, orchestrator runs `down` to rollback, ensuring idempotent reversibility.
+
+- **Deployments (Deployment)**  
+  - Deployment strategies (rolling, blue-green, canary) are designed to allow safe retries.  
+  - Failed or partial deploys can be retried without corrupting state.  
+  - Rollback plans are defined in every DeployEnvelope before prod promotion.
+
+### 4.3 Resume Safety
+
+- **Crash or stop tolerance:** Because state is written to JSON artifacts and ReturnEnvelopes, the orchestrator can reload and pick up where it left off.  
+- **Plan-driven selection:** Manager agents always choose the first `pending` task whose dependencies are complete. CD Manager always chooses the next incomplete environment in `release.json`.  
+- **Audit trail:** Past ReturnEnvelopes, TestReports, and DeployEnvelopes remain in `/state/` for forensic review, while the authoritative design and plan files live under version control.  
+
+### 4.4 Human Touch Points in State
+
+- **Design approvals:** humans approve or request changes in `/design/docs/<feature>.md`.  
+- **Dependency checks:** humans confirm or resolve missing items in `/design/dependencies.json`.  
+- **Reviewer escalations:** humans may step in if an escalation loops or tasks cannot be auto-resolved.  
+- **Deployment holds:** humans explicitly approve environments flagged `hold_for_approval` in `release.json`.
+
+---
+
+**In practice:**  
+- The **plan and release files** (`plan.json`, `dependencies.json`, `release.json`) are the **source of truth**.  
+- The **runtime state directories** (`/state/runs/`, `/state/cd/`) are the **ledger of what happened**.  
+- This separation ensures reproducibility, safety, and a clean audit trail.
+
+## 5) Repository Layout
+
+The repository is organized so that every phase of the lifecycle has a clear place to store its artifacts.  
+This makes the process predictable, auditable, and easy to resume.
+
+### Top-Level Directories
+
+- **`/design/`** — Design & dependency phase outputs  
+  - `/design/docs/<feature>.md` → human-readable design document (narrative spec, approved by stakeholders).  
+  - `/design/*.json` → machine-readable artifacts (research, backend, frontend, architecture, identity, dataflow, plan, dependencies).  
+
+- **`/specs/`** — JSON Schemas used to validate agent outputs.  
+  - **Key files:**  
+    - `Plan.schema.json` — structure of the execution DAG.  
+    - `ReturnEnvelope.schema.json` — structure of Implementor outputs.  
+    - `ReleasePlan.schema.json` — environment promotion plan.  
+  - Additional schemas cover design modules (research, backend, frontend, identity, dataflow, dependencies, etc.).
+
+- **`/state/`** — Runtime state (gitignored; not checked in)  
+  - `/state/runs/<run-id>/task-<id>.json` → ReturnEnvelopes from integration.  
+  - `/state/cd/<run-id>/<env>/...` → Deployment artifacts: DeployEnvelope, DBChangeEnvelope, TestReports, logs.  
+
+- **`/cd/`** — Deployment planning inputs  
+  - `/cd/release.json` → ReleasePlan describing environments, strategies, health budgets, test suites, DB changes.  
+
+- **`/docs/planning/`** — Prompt templates and guides for design  
+  - `TEAM.chat.md`, individual module prompts, planner prompt, dependencies prompt, `USAGE-n8n.md`.  
+
+- **`/docs/cd/`** — Prompt templates and guides for deployment  
+  - Prompts for CD Manager, Deployer, DBA, Tester, SRE Reviewer.  
+  - `USAGE-CD.md` → guide to set up n8n CD workflow.  
+
+- **`/tools/`** — Orchestrator-side scripts and helpers  
+  - `repo-snapshot.mjs`, `apply-envelope.mjs`, `deploy.mjs`, `run-tests.mjs`, `healthcheck.mjs`, `backup-db.mjs`, `migrate-db.mjs`.  
+
+- **`/.github/workflows/`** — CI definitions  
+  - `validate-schemas.yml` → validate design and plan files.  
+  - Additional workflows for lint, tests, build (project-specific).  
+
+### Lifecycle Mapping
+
+- **Design →** `/design/docs/*` + `/design/*.json`  
+- **Dependency Prep →** `/design/dependencies.json`  
+- **Integration →** commits, updated `/design/plan.json`, and ReturnEnvelopes in `/state/runs/`  
+- **Deployment →** `/cd/release.json` (input) + `/state/cd/*` (runtime outputs)
+## 6) Data Model Contracts
+
+AI Dev Tasks is **schema-first**. Every agent output must validate against a JSON Schema in `/specs/`.  
+This keeps the workflow predictable, auditable, and safe for automation.
+
+### Core Contracts
+
+- **PRD (`/specs/Prd.schema.json`)**  
+  Defines the structure of a Product Requirements Document in JSON.  
+  • Title, goals, non-functional requirements.  
+  • Functional requirements with acceptance criteria.  
+  • Risks, assumptions, and release slices.  
+  • Basis for both stakeholder docs and the Planner’s task DAG.
+
+- **Plan (`/specs/Plan.schema.json`)**  
+  Represents the execution plan (task DAG).  
+  • Tasks with `id`, `title`, `description`.  
+  • Explicit `depends_on` references (tasks and external dependencies).  
+  • Acceptance criteria for each task.  
+  • Routing hints (`nano | mini | pro`) and retry policies.  
+  • Idempotency signature so tasks can be skipped if already satisfied.  
+
+- **ReturnEnvelope (`/specs/ReturnEnvelope.schema.json`)**  
+  Captures an Implementor agent’s proposed code change.  
+  • Diff (human-readable patch).  
+  • Files[] (base64 + optional hashes).  
+  • Tests to run or add.  
+  • Costs (model tokens, USD).  
+  • Notes/rationale.  
+  • Idempotent flag if task is already satisfied.  
+  One ReturnEnvelope is produced per task and saved under `/state/runs/<run-id>/task-<id>.json`.
+
+- **ReleasePlan (`/specs/ReleasePlan.schema.json`)**  
+  Governs deployment through environments.  
+  • Ordered list of environments (dev → test → stage → prod).  
+  • Deployment strategy (rolling, blue-green, canary).  
+  • Health policies (checks + error budgets).  
+  • Test suites per environment.  
+  • Database changes (with backup + rollback).  
+  • Manual approval holds.  
+  Input file: `/cd/release.json`.
+
+### Supporting Contracts
+
+Additional schemas exist for specialized outputs, including:  
+- **Dependencies** (`Dependencies.schema.json`) → external libraries, services, credentials, infra resources.  
+- **DeployEnvelope** (`DeployEnvelope.schema.json`) → actual deployment attempt details and rollback plan.  
+- **DBChangeEnvelope** (`DBChangeEnvelope.schema.json`) → migration execution results with backups.  
+- **TestReport** (`TestReport.schema.json`) → results of unit, integration, smoke, or perf suites.  
+- **Design module JSONs** (`research.json`, `backend.json`, `frontend.json`, `identity.json`, `dataflow.json`) → detailed designs aligned with their respective prompts.
+
+---
+
+**In short:**  
+- **PRD** → defines *what to build*.  
+- **Plan** → defines *how to build it step by step*.  
+- **ReturnEnvelope** → defines *the unit of change for each task*.  
+- **ReleasePlan** → defines *how to safely promote the built artifact through environments*.
+## 7) Branch, Commit, and CI Policy
+
+The Integration and Deployment phases rely on a strict branching and commit discipline, backed by automated CI gates.  
+This ensures that every task is traceable, every change is testable, and merges only occur when quality criteria are satisfied.
+
+### 7.1 Branch Policy
+
+- **Feature branches**  
+  - One branch per feature or PRD, named `feat/<slug>`.  
+  - Example: `feat/login-2fa` or `feat/reporting-dashboard`.  
+  - All commits for tasks in that feature land on this branch.  
+
+- **Main branch**  
+  - Protected.  
+  - Only updated via Pull Request from feature branches.  
+  - Requires all CI checks to pass and reviewer approval before merge.
+
+### 7.2 Commit Policy
+
+- **One commit per task**  
+  - Every task in `plan.json` corresponds to exactly one commit.  
+  - Commit message format:  
+    ```
+    Task <id>: <task title>
+    ```
+    Example: `Task 2.1: Add /login endpoint with password validation`
+
+- **Commit contents**  
+  - Derived from the Implementor’s ReturnEnvelope.  
+  - Includes code changes, tests, and notes.  
+  - Changes are applied by orchestrator tooling (`apply-envelope.mjs`) to ensure safe, atomic commits.  
+
+- **Audit trail**  
+  - Commits can be traced back to task IDs in `plan.json`.  
+  - Runtime ReturnEnvelope snapshots live under `/state/runs/<run-id>/task-<id>.json` for additional detail.
+
+### 7.3 Continuous Integration (CI)
+
+- **Required gates**  
+  - **Lint**: static style/lint check.  
+  - **Unit tests**: must run cleanly and cover updated code.  
+  - **Build**: project must build successfully.
+
+- **Optional/Recommended gates**  
+  - **SAST / dependency scanning**: detect security issues in dependencies.  
+  - **Semantic evaluation**: AI-based test assertions or rubric checks from `/eval/`.
+
+- **CI enforcement**  
+  - Orchestrator runs CI after each Implementor commit.  
+  - Reviewer considers CI results as part of verdict.  
+  - Branch protection enforces green CI before merge into `main`.
+
+### 7.4 Merge Policy
+
+- Pull Requests are created automatically or manually from feature branches to `main`.  
+- Merge is only allowed when:  
+  - All commits follow the one-task-per-commit rule.  
+  - All required CI gates are green.  
+  - Reviewer verdict = approved.  
+  - Human approval is granted if required (e.g., for production deployment holds).  
+
+---
+
+**Why it matters**  
+- Keeps **traceability** between design tasks, ReturnEnvelopes, and commits.  
+- Ensures **predictable quality gates** before code reaches `main`.  
+- Maintains **auditability**: every change is tied back to a schema-validated artifact and a human-approved design.
+```mermaid
+flowchart LR
+  subgraph FeatureBranch["Feature Branch: feat/<slug>"]
+    T1[Commit: Task 1] --> T2[Commit: Task 2] --> T3[Commit: Task 3]
+  end
+
+  FeatureBranch --> PR[Pull Request to main]
+
+  PR --> CI[CI Gates: lint · tests · build]
+  CI --> Review[Reviewer Approval]
+  Review --> Merge[Merge into main]
+
+  style Review fill:#fff6d5,stroke:#d4a300,color:#3d2e00
+```
