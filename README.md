@@ -101,3 +101,83 @@
 
 ### Why this exists
 - To connect **business viability** (prospectus with explicit margins) → **technical design** (backend, frontend, architecture, identity, data flows, dependencies) → **delivery** (integration and deployment) with safety and predictability.
+
+flowchart TD
+  %% ===== STYLE / LEGEND =====
+  classDef human fill:#fff6d5,stroke:#d4a300,stroke-width:1px,color:#3d2e00;
+  classDef agent fill:#e6f2ff,stroke:#1373d1,stroke-width:1px,color:#062b4f;
+  classDef sys fill:#eef7ee,stroke:#2a7b2e,stroke-width:1px,color:#103d12;
+  classDef gate fill:#ffeaea,stroke:#b3261e,stroke-width:1px,color:#4a0f0c;
+  classDef data fill:#f4f4f5,stroke:#6b7280,stroke-width:1px,color:#111827;
+
+  %% ===== NODES =====
+  HREQ([Human Requester submits idea]):::human
+
+  subgraph S1[Phase 1: Design (ChatGPT · Dual Audience & Modular)]
+    direction TB
+    D1a[[Research Analyst Agent]]:::agent -->|research.json + Prospectus section| D_DOC1[(design/docs/<feature>.md)]:::data
+    D1b[[Backend Designer Agent]]:::agent -->|backend.json + Backend section| D_DOC1
+    D1c[[Frontend Designer Agent]]:::agent -->|frontend.json + Frontend section| D_DOC1
+    D1d[[Architect Agent]]:::agent -->|architecture.json + Arch section| D_DOC1
+    D1e[[Identity Designer Agent]]:::agent -->|identity.json + Identity section| D_DOC1
+    D1f[[Data Flow Agent]]:::agent -->|dataflow.json + DFD section| D_DOC1
+    D1g[[Planner Agent]]:::agent -->|plan.json + Roadmap section| D_DOC1
+
+    HREV1{Human Stakeholder<br/>reviews each section}:::human
+    D_DOC1 --> HREV1
+    HREV1 -- approve --> D_OK1[Design Package Approved]:::sys
+    HREV1 -- request changes --> D_FEED1[[Agent revises module]]:::agent --> D_DOC1
+  end
+
+  subgraph S1_5[Phase 2: Dependency Prep (Human + ChatGPT support)]
+    direction TB
+    DEPAG[[Dependency Analyst (light)]]:::agent -->|dependencies.json| DEP_JSON[(dependencies.json)]:::data
+    D_OK1 --> DEPAG
+    HCHK{Human pre-flight:<br/>libs/APIs/creds/infra ready?}:::human
+    DEP_JSON --> HCHK
+    HCHK -- confirm ready --> DEP_OK[Dependencies Ready]:::sys
+    HCHK -- missing/manual --> DEP_FIX[Human resolves gaps]:::human --> HCHK
+  end
+
+  subgraph S2[Phase 3: Integration (n8n Implementation)]
+    direction TB
+    MGR[[Manager Agent]]:::agent -->|select pending task<br/>(deps satisfied)| IMP[[Implementor Agent]]:::agent
+    IMP -->|ReturnEnvelope<br/>(diff, files, tests, costs)| APPLY[Orchestrator applies files]:::sys
+    APPLY --> CI[CI: lint, unit tests, build]:::sys
+    CI --> REV[[Reviewer Agent]]:::agent
+
+    REV -- approved --> COMMIT[Commit 1 per task<br/>update plan.json]:::sys
+    REV -- needs changes --> IMP
+    REV -- escalate --> ESC[Escalate model tier<br/>(nano→mini→pro)]:::gate --> IMP
+    CI -- fail --> IMP
+
+    COMMIT --> NEXTQ{More tasks?}:::sys
+    NEXTQ -- yes --> MGR
+    NEXTQ -- no --> INT_DONE[Integration Complete]:::sys
+  end
+
+  subgraph S3[Phase 4: Deployment (n8n CD)]
+    direction TB
+    CDM[[CD Manager Agent]]:::agent -->|next env (dev→test→stage→prod)| DEPLOY[[Deployer Agent]]:::agent
+    DEPLOY -->|DeployEnvelope (plan)| EXEC_DEP[Orchestrator executes deploy]:::sys
+    DBQ{DB changes?}:::sys
+    EXEC_DEP --> DBQ
+    DBQ -- yes --> DBA[[DBA Agent]]:::agent -->|DBChangeEnvelope| EXEC_DB[Backup + Migrate + Checks]:::sys --> TESTER
+    DBQ -- no --> TESTER[[Tester Agent]]:::agent
+    TESTER -->|TestReport specs| RUNTESTS[Orchestrator runs suites & captures results]:::sys
+    RUNTESTS --> HEALTH[Orchestrator runs health checks]:::sys
+    HEALTH --> SRE[[SRE Reviewer Agent]]:::agent
+
+    SRE -- promote --> NEXTENV{More envs?}:::sys
+    NEXTENV -- yes --> CDM
+    NEXTENV -- no --> REL_DONE[Release Complete (Prod)]:::sys
+
+    SRE -- retry --> DEPLOY
+    SRE -- rollback --> RBACK[Orchestrator executes rollback plan]:::gate --> CDM
+    SRE -- hold --> HUMANAPP[Human approval required]:::human --> CDM
+  end
+
+  %% ===== FLOW LINKS =====
+  HREQ --> D1a
+  INT_DONE --> CDM
+  DEP_OK --> MGR
