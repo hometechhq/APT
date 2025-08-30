@@ -155,7 +155,7 @@ flowchart TD
   end
 
   %% ===== PHASE 3: INTEGRATION =====
-  subgraph P2[Phase 3: Integration (n8n implementation)]
+  subgraph P2[Phase 3: Integration n8n implementation]
     direction TB
     Manager[Manager Agent selects next pending task\n deps satisfied] --> Implementor[Implementor Agent produces ReturnEnvelope]
     Implementor --> Apply[Orchestrator applies files]
