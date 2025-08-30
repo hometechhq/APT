@@ -146,7 +146,7 @@ flowchart TD
   %% ===== PHASE 1.5: DEPENDENCY PREP =====
   subgraph P15[Phase 2: Dependency Prep]
     direction TB
-    DepAnalyst[Dependency Analyst (light)] --> DepJSON[Write design/dependencies.json]
+    DepAnalyst[Dependency Analyst light] --> DepJSON[Write design/dependencies.json]
     D_OK --> DepAnalyst
     Preflight[HUMAN PRE-FLIGHT: libs / APIs / creds / infra ready?]:::human
     DepJSON --> Preflight
@@ -157,7 +157,7 @@ flowchart TD
   %% ===== PHASE 3: INTEGRATION =====
   subgraph P2[Phase 3: Integration (n8n implementation)]
     direction TB
-    Manager[Manager Agent selects next pending task\n(deps satisfied)] --> Implementor[Implementor Agent produces ReturnEnvelope]
+    Manager[Manager Agent selects next pending task\n deps satisfied] --> Implementor[Implementor Agent produces ReturnEnvelope]
     Implementor --> Apply[Orchestrator applies files]
     Apply --> CI[CI: lint · tests · build]
     CI --> Reviewer[Reviewer Agent]
