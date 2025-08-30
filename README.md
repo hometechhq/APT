@@ -197,13 +197,17 @@ flowchart TD
 
 ```
 ```mermaid
+
 flowchart TD
 
-  %% === Phase 1: Design ===
+  %% style for human touch points
+  classDef human fill:#fff6d5,stroke:#d4a300,color:#3d2e00;
+
+  %% phase 1 design
   subgraph Phase1[Phase 1: Design]
     HREQ[Human requester submits idea]
 
-    Research[Research Analyst Agent] --> Doc1[Append to design/docs]
+    Research[Research Analyst Agent] --> Doc1[Append to design docs]
     Research --> Art1[Write research.json]
 
     Backend[Backend Designer Agent] --> Doc1
@@ -233,47 +237,47 @@ flowchart TD
     Research --> Backend --> Frontend --> Architect --> Identity --> DataFlow --> Planner
   end
 
-  %% === Phase 1.5: Dependency Prep ===
+  %% phase 1.5 dependency prep
   subgraph Phase15[Phase 2: Dependency Prep]
     DepAnalyst[Dependency Analyst] --> DepJSON[Write dependencies.json]
     D_OK --> DepAnalyst
-    Preflight[Human pre-flight check: libs, APIs, creds, infra ready]
+    Preflight[Human preflight check libs apis creds infra ready]
     DepJSON --> Preflight
     Preflight -- confirm ready --> DepReady[Dependencies ready]
-    Preflight -- missing/manual --> FixGaps[Human resolves gaps] --> Preflight
+    Preflight -- missing or manual --> FixGaps[Human resolves gaps] --> Preflight
   end
 
-  %% === Phase 2: Integration ===
+  %% phase 2 integration
   subgraph Phase2[Phase 3: Integration]
     Manager[Manager Agent selects next task] --> Implementor[Implementor Agent produces ReturnEnvelope]
     Implementor --> Apply[Orchestrator applies files]
-    Apply --> CI[CI: lint, tests, build]
+    Apply --> CI[CI run lint tests build]
     CI --> Reviewer[Reviewer Agent]
 
-    Reviewer -- approved --> Commit[Commit 1 per task and update plan.json]
+    Reviewer -- approved --> Commit[Commit one per task and update plan.json]
     Reviewer -- needs changes --> Implementor
     Reviewer -- escalate model tier --> Implementor
     CI -- fail --> Implementor
 
-    Commit --> MoreTasks{More tasks?}
+    Commit --> MoreTasks{More tasks}
     MoreTasks -- yes --> Manager
     MoreTasks -- no --> IntDone[Integration complete]
     DepReady --> Manager
   end
 
-  %% === Phase 3: Deployment ===
+  %% phase 3 deployment
   subgraph Phase3[Phase 4: Deployment]
     CDM[CD Manager Agent selects next environment] --> Deployer[Deployer Agent plans deployment]
     Deployer --> ExecDeploy[Orchestrator executes deployment]
-    ExecDeploy --> DBQ{Database changes?}
-    DBQ -- yes --> DBA[DBA Agent plans DB changes] --> ExecDB[Backup and migrate with checks]
+    ExecDeploy --> DBQ{Database changes}
+    DBQ -- yes --> DBA[DBA Agent plans db changes] --> ExecDB[Backup and migrate with checks]
     DBQ -- no --> Tester[Tester Agent defines suites]
     ExecDB --> Tester
     Tester --> RunTests[Orchestrator runs tests and captures reports]
     RunTests --> Health[Orchestrator runs health checks]
     Health --> SRE[SRE Reviewer Agent decides]
 
-    SRE -- promote --> NextEnv{More environments?}
+    SRE -- promote --> NextEnv{More environments}
     NextEnv -- yes --> CDM
     NextEnv -- no --> ReleaseDone[Release complete in prod]
 
@@ -283,5 +287,9 @@ flowchart TD
 
     IntDone --> CDM
   end
+
+  %% apply human styling
+  class HREQ,HREV,Preflight,FixGaps,HumanApprove human;
+
 
 ```
