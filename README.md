@@ -172,7 +172,7 @@ flowchart TD
   end
 
   %% ===== PHASE 4: DEPLOYMENT =====
-  subgraph P3[Phase 4: Deployment (n8n CD)]
+  subgraph P3[Phase 4: Deployment n8n CD]
     direction TB
     CDM[CD Manager Agent selects next environment] --> Deployer[Deployer Agent plans deployment]
     Deployer --> ExecDeploy[Orchestrator executes deployment]
