@@ -104,7 +104,7 @@
 ```mermaid
 flowchart TD
   %% ===== PHASE 1: DESIGN =====
-  subgraph P1[Phase 1: Design (ChatGPT · dual-audience · modular)]
+  subgraph P1[Phase 1: Design ChatGPT · dual-audience · modular]
     direction TB
     HREQ[Human requester submits idea]
 
