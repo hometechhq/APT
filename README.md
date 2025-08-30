@@ -663,3 +663,285 @@ flowchart TD
 - **Write Binary** → persists a file to disk (e.g., envelopes under `/state/`).  
 - **Wait** → pause for a human approval or a timed delay.  
 - **Stop** → clean termination of the flow when no further work is needed.
+
+## 9) Tooling & Safe I/O Boundary
+
+A key design principle is that **agents never perform side effects directly**.  
+Agents **only emit JSON** that conforms to schemas.  
+The orchestrator (n8n) is the only component that actually executes commands, writes files, or deploys code.
+
+### 9.1 Safe I/O Contracts
+
+- **File edits**  
+  - Agents propose changes in a `ReturnEnvelope` (diff + files + hashes).  
+  - Orchestrator applies changes using `tools/apply-envelope.mjs`.  
+  - Path allowlists and SHA256 verification prevent unsafe writes.
+
+- **Git operations**  
+  - Orchestrator commits one task at a time, with standardized commit messages.  
+  - Force pushes are disabled; merges only happen through PRs with CI gates.
+
+- **Tests & CI**  
+  - Agents specify tests in JSON (`ReturnEnvelope.tests`, `ReleasePlan.tests`).  
+  - Orchestrator runs them via `tools/run-tests.mjs` or CI workflows.  
+  - Results are written back into `TestReports`.
+
+- **Deployments**  
+  - Agents define a DeployEnvelope.  
+  - Orchestrator runs `tools/deploy.mjs` or Helm/Kubectl commands.  
+  - All steps are logged and outputs stored under `/state/cd/`.
+
+- **Database changes**  
+  - Agents emit `DBChangeEnvelope`.  
+  - Orchestrator runs `tools/backup-db.mjs` before migrations and `tools/migrate-db.mjs` for changes.  
+  - Rollbacks are performed with the provided `down` commands.
+
+- **Health checks**  
+  - Defined in `ReleasePlan.health`.  
+  - Orchestrator executes `tools/healthcheck.mjs`, writing results into each DeployEnvelope.
+
+### 9.2 Human Boundaries
+
+Humans remain in control at explicit gates:
+- Approve design docs (`/design/docs/<feature>.md`).  
+- Confirm dependencies in `/design/dependencies.json`.  
+- Approve or reject Reviewer escalations.  
+- Approve deployments when `hold_for_approval=true`.  
+- Manually resolve any “manual” dependencies.
+
+### 9.3 Safety Guarantees
+
+- **Schema compliance** — all artifacts must validate against `/specs/*.schema.json`.  
+- **Least privilege** — tools enforce path allowlists, timeouts, and log every action.  
+- **Audit trail** — all envelopes and reports are saved in `/state/`.  
+- **Resumability** — any workflow can restart from the current state artifacts.  
+- **Rollback** — required for all DB migrations and prod deploys.
+
+---
+
+**In short:**  
+Agents plan → Orchestrator executes → Humans approve at gates.  
+This strict separation makes the system safe, predictable, and auditable.
+## 10) Garbage Collection & Audit
+
+The system generates a large number of runtime artifacts (ReturnEnvelopes, DeployEnvelopes, TestReports, logs).  
+These are essential for **resumability** and **forensics**, but they should not bloat the repository indefinitely.  
+To manage this, we distinguish between **ephemeral runtime state** and **durable audit snapshots**.
+
+### 10.1 Ephemeral Runtime State
+
+- Lives under `/state/`.  
+- Gitignored by default.  
+- Examples:  
+  - `/state/runs/<run-id>/task-<id>.json` — ReturnEnvelopes from Integration.  
+  - `/state/cd/<run-id>/<env>/deploy.json` — DeployEnvelopes.  
+  - `/state/cd/<run-id>/<env>/db.json` — DBChangeEnvelopes.  
+  - `/state/cd/<run-id>/<env>/tests.json` — TestReports.  
+  - `/state/cd/<run-id>/<env>/logs/*` — logs and execution artifacts.
+
+These are needed while a run is active or paused. Once the run completes, they can be summarized and pruned.
+
+### 10.2 Durable Audit Snapshots
+
+- Captured in `/docs/runs/<feature>/`.  
+- Provide a concise, durable record of what happened.  
+- Typical contents:  
+  - `summary.json` → high-level run summary (tasks completed, costs, tests passed).  
+  - `deploy-summary.json` → environments promoted, rollback or retries invoked.  
+  - Links back to commits and PRs in the repository.  
+- Unlike `/state/`, these files **are committed** to git for long-term audit and traceability.
+
+### 10.3 Garbage Collection Process
+
+- **Script**: `/scripts/gc-runs.mjs`.  
+- **Policy**:  
+  - Retain only the most recent N runs (configurable).  
+  - Optionally preserve all runs for the past X days.  
+  - Always keep any runs that were promoted to production.  
+- **Action**:  
+  - Prune older `/state/runs/*` and `/state/cd/*` directories beyond the retention window.  
+  - Leave snapshots under `/docs/runs/` untouched.
+
+### 10.4 Human Role in Audit
+
+Humans remain part of the audit trail at key gates:  
+- Approving design sections in `/design/docs/<feature>.md`.  
+- Confirming dependencies in `/design/dependencies.json`.  
+- Signing off escalations in Integration (if Reviewer requests).  
+- Approving `hold_for_approval` in Deployment.  
+
+These approvals are documented in both the human docs and the corresponding machine artifacts (plan, dependencies, release).
+
+### 10.5 Why It Matters
+
+- **Resumability**: `/state/` contains everything needed to restart a run mid-way.  
+- **Traceability**: `/docs/runs/` snapshots provide long-term audit of design → integration → deployment.  
+- **Repository hygiene**: garbage collection prevents unbounded growth of runtime data.  
+- **Accountability**: human decisions are visible in docs and linked to JSON artifacts.
+
+---
+
+**In short:**  
+- `/state/` = **ephemeral runtime ledger**, pruned with GC.  
+- `/docs/runs/` = **durable audit snapshots**, committed to git.
+
+## 11) Quickstart
+
+This section shows how to go from a raw feature idea to production using AI Dev Tasks.
+
+### Step 1 — Start with an Idea
+- A human requester describes the feature or product idea.  
+- Example: *“Add email login with optional 2FA”*.  
+
+### Step 2 — Run the Design Phase
+- Open `/docs/planning/TEAM.chat.md` in ChatGPT.  
+- Work through each design agent prompt (Research, Backend, Frontend, Architect, Identity, Data Flow, Planner).  
+- After each module:  
+  - Save the **human doc section** to `/design/docs/<feature>.md`.  
+  - Save the **JSON artifact** to `/design/<module>.json`.  
+- Stakeholders review and approve the human doc sections.  
+- Once all modules are complete, ensure `plan.json` exists and validates.
+
+**Result:** `/design/docs/<feature>.md` + JSON artifacts under `/design/`.
+
+### Step 3 — Confirm Dependencies
+- Review `/design/dependencies.json`.  
+- Mark each dependency as `available`, `missing`, or `manual`.  
+- Humans resolve any `missing` or `manual` items before proceeding.  
+
+**Result:** `/design/dependencies.json` is complete and committed.
+
+### Step 4 — Run Integration (n8n)
+- Import the Integration workflow (`/docs/planning/USAGE-n8n.md`) into n8n.  
+- Configure environment variables:  
+  - `REPO_DIR` → absolute path to the project repo.  
+  - `GIT_BRANCH` → feature branch name (e.g., `feat/login-2fa`).  
+- Trigger the workflow. n8n will:  
+  - Manager → pick next pending task.  
+  - Implementor → emit ReturnEnvelope.  
+  - Orchestrator → apply files and run CI.  
+  - Reviewer → approve, request changes, or escalate.  
+- Each task results in exactly one commit.  
+- Workflow resumes automatically until all tasks are complete.
+
+**Result:** A feature branch with one commit per task and green CI.
+
+### Step 5 — Plan Deployment
+- Create a ReleasePlan in `/cd/release.json`.  
+- Define environments (`dev`, `test`, `stage`, `prod`), deploy strategies, health budgets, test suites, and DB changes.  
+- Validate against `/specs/ReleasePlan.schema.json`.
+
+**Result:** `/cd/release.json` committed.
+
+### Step 6 — Run Deployment (n8n CD)
+- Import the CD workflow (`/docs/cd/USAGE-CD.md`) into n8n.  
+- Trigger deployment. n8n will:  
+  - CD Manager → select next environment.  
+  - Deployer → produce DeployEnvelope.  
+  - DBA (if needed) → handle DB migrations with backup/rollback.  
+  - Tester → define and run suites.  
+  - Health checks → run automatically.  
+  - SRE Reviewer → issue verdict (promote, retry, rollback, hold).  
+- Human approval is required if `hold_for_approval=true` (usually stage/prod).  
+- Continue until production is promoted or halted.
+
+**Result:** Artifact safely promoted through dev → test → stage → prod.
+
+### Step 7 — Audit and Snapshot
+- Runtime artifacts live under `/state/` while runs are active.  
+- Run `/scripts/gc-runs.mjs` to prune old states once complete.  
+- Commit durable snapshots into `/docs/runs/<feature>/` for audit.
+
+**Result:** Clean repo state and permanent audit trail.
+
+---
+
+**In short:**  
+1. **Idea →** `/design/docs` + JSON specs.  
+2. **Dependencies →** `/design/dependencies.json`.  
+3. **Integration →** commits per task via n8n.  
+4. **Deployment →** `/cd/release.json` + promotion via n8n CD.  
+5. **Audit →** snapshots in `/docs/runs/`.
+## 12) FAQ
+
+**Q: How do humans know what they are getting before build starts?**  
+A: The Design Phase always produces a **stakeholder-readable doc** (`/design/docs/<feature>.md`) alongside JSON specs.  
+Humans approve each section of the design doc (research, backend, frontend, architecture, identity, data flows, roadmap) before Integration begins.
+
+---
+
+**Q: What happens if a dependency isn’t available (like a third-party API or missing library)?**  
+A: The Dependency Prep Phase captures this in `/design/dependencies.json`.  
+Dependencies are marked `available`, `missing`, or `manual`. Integration will not start until required items are marked `available`. Humans must resolve `manual` or `missing` items.
+
+---
+
+**Q: Can smaller/cheaper models (nano, mini) be used reliably?**  
+A: Yes. Tasks and environments include a `routing` field (`nano | mini | pro`).  
+- Most tasks can run on nano/mini to save cost.  
+- If validation or CI fails repeatedly, the orchestrator escalates to the next tier.  
+- Critical phases (PRD creation, architecture, prod deployment) should always use `pro`.
+
+---
+
+**Q: How do we avoid agents doing unsafe things?**  
+A: Agents **never execute side effects directly**. They only emit JSON artifacts that validate against strict schemas.  
+n8n executes side effects via controlled scripts in `/tools/` with path allowlists, timeouts, and logging.  
+Examples:  
+- `apply-envelope.mjs` safely applies file changes.  
+- `run-tests.mjs` executes test suites.  
+- `backup-db.mjs` and `migrate-db.mjs` handle DB migrations with rollback safety.
+
+---
+
+**Q: What if Integration is stopped mid-run?**  
+A: The orchestrator can resume at any time.  
+- Task state is tracked in `/design/plan.json` (authoritative) and `/state/runs/<run-id>/task-<id>.json`.  
+- Manager Agent simply selects the next `pending` task whose dependencies are satisfied.  
+- Previously completed or skipped tasks will not be repeated.
+
+---
+
+**Q: What if Deployment fails in test or stage?**  
+A: The SRE Reviewer agent issues a verdict: `retry`, `rollback`, `hold`.  
+- `retry` → attempt the environment again.  
+- `rollback` → orchestrator executes the rollback plan in the DeployEnvelope or DBChangeEnvelope.  
+- `hold` → requires explicit human approval before proceeding.  
+Production deployments must always have a rollback plan defined.
+
+---
+
+**Q: How are human approvals enforced?**  
+A: At explicit gates:  
+- **Design** → stakeholders approve `/design/docs/<feature>.md`.  
+- **Dependencies** → humans confirm or resolve items in `/design/dependencies.json`.  
+- **Integration** → humans can step in on Reviewer escalations.  
+- **Deployment** → humans must approve when `hold_for_approval=true` in `release.json` (usually stage/prod).
+
+---
+
+**Q: Where do audit logs and artifacts live?**  
+A:  
+- Runtime state is stored in `/state/` (gitignored).  
+- Durable audit snapshots are committed into `/docs/runs/<feature>/`.  
+- Snapshots include summaries, deployment outcomes, and links back to commits.  
+- Garbage collection scripts prune old runtime state while keeping committed snapshots.
+
+---
+
+**Q: What ensures idempotency?**  
+A:  
+- Each task in `plan.json` includes an `idempotency_signature`.  
+- Implementor sets `idempotent_satisfied=true` if acceptance is already met.  
+- Database migrations include `up` and `down` commands, with pre/post checks.  
+- Deploy strategies (rolling, blue-green, canary) are inherently retryable.
+
+---
+
+**Q: How do we extend this system?**  
+A:  
+- Add new schema definitions under `/specs/`.  
+- Add prompt templates under `/docs/planning/` or `/docs/cd/`.  
+- Extend tooling in `/tools/` with safe wrappers.  
+- Update CI workflows in `/.github/workflows/`.  
+All extensions must preserve schema-first, orchestrator-driven, and auditability principles.
