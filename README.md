@@ -113,9 +113,9 @@ flowchart TD
   %% ===== NODES =====
   HREQ([Human Requester submits idea]):::human
 
-  subgraph S1[Phase 1: Design (ChatGPT · Dual Audience & Modular)]
+  subgraph S1[Phase 1: Design ChatGPT · Dual Audience & Modular]
     direction TB
-    D1a[[Research Analyst Agent]]:::agent -->|research.json + Prospectus section| D_DOC1[(design/docs/<feature>.md)]:::data
+    D1a[[Research Analyst Agent]]:::agent -->|research.json + Prospectus section| D_DOC1[design/docs/<feature>.md]:::data
     D1b[[Backend Designer Agent]]:::agent -->|backend.json + Backend section| D_DOC1
     D1c[[Frontend Designer Agent]]:::agent -->|frontend.json + Frontend section| D_DOC1
     D1d[[Architect Agent]]:::agent -->|architecture.json + Arch section| D_DOC1
