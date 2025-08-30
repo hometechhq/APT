@@ -245,54 +245,14 @@ The core updates are:
 
 ## 3) Architecture at a Glance
 
-At the highest level, the system flows like this:
+The system is structured around a clear, layered flow:
 
-- **Human requester** submits an idea.  
-- **Design Phase agents** (Research, Backend, Frontend, Architect, Identity, Data Flow, Planner) build out stakeholder documentation and JSON contracts.  
-- **Humans review and approve** the design sections.  
-- **Dependency Prep** ensures external services, APIs, libraries, credentials, and infra are available.  
-- **Integration Phase agents** (Manager → Implementor → Reviewer → CI) turn the plan into commits, one task at a time, with CI gating and resumable state.  
-- **Deployment Phase agents** (CD Manager → Deployer → DBA → Tester → SRE Reviewer) promote the artifact through dev → test → stage → prod, with tests, health checks, rollbacks, and human approvals where required.  
+- **Humans initiate and approve**: a requester submits an idea, stakeholders review design docs, and humans confirm dependencies and approve promotions when required.
+- **Specialized design agents**: Research, Backend, Frontend, Architect, Identity, Data Flow, and Planner agents create both human docs and JSON artifacts.
+- **Dependency prep**: a short human-in-the-loop phase ensures libraries, APIs, credentials, and infrastructure are ready before any build work starts.
+- **Integration loop**: Manager, Implementor, Reviewer, and CI collaborate under n8n orchestration to implement one task at a time, gated by tests and validations.
+- **Deployment loop**: CD Manager, Deployer, DBA, Tester, and SRE Reviewer move the artifact safely through dev → test → stage → prod with health checks, rollbacks, and optional manual approvals.
 
-### Simplified flow
+Each phase has **explicit deliverables** (human docs for clarity, JSON artifacts for automation) and **clear quality gates** (reviews, dependencies, CI, tests, health checks).  
+Together, this creates an end-to-end pipeline that is **predictable, auditable, and resumable** from idea all the way to production.
 
-```mermaid
-flowchart TD
-  HR[Human Requester] --> DAgents[Design Phase Agents]
-  DAgents --> Docs[Human docs for stakeholders]
-  DAgents --> JSON[Machine JSON artifacts]
-  Docs --> HReview[Human Review and Approval]
-  HReview -->|approve| DesignOK[Design Approved]
-
-  DesignOK --> DepPrep[Dependency Prep Phase]
-  DepPrep --> Checklist[Dependencies checklist + dependencies.json]
-  Checklist --> DepReady[Dependencies ready]
-
-  DepReady --> Manager[Integration Manager Agent]
-  Manager --> Implementor[Implementor Agent]
-  Implementor --> CI[CI: lint, tests, build]
-  CI --> Reviewer[Reviewer Agent]
-  Reviewer -->|approved| Commit[Commit per task + update plan.json]
-  Reviewer -->|needs changes / escalate| Implementor
-  Commit --> MoreTasks{More tasks?}
-  MoreTasks -- yes --> Manager
-  MoreTasks -- no --> IntegrationDone[Integration Complete]
-
-  IntegrationDone --> CDManager[CD Manager Agent]
-  CDManager --> Deployer[Deployer Agent]
-  Deployer --> DBA[DBA Agent if DB changes]
-  DBA --> Tester[Tester Agent]
-  Deployer --> Tester
-  Tester --> Tests[Run tests + produce TestReports]
-  Tests --> Health[Run health checks]
-  Health --> SRE[SRE Reviewer Agent]
-
-  SRE -->|promote| NextEnv{More environments?}
-  NextEnv -- yes --> CDManager
-  NextEnv -- no --> ReleaseDone[Release Complete in Prod]
-  SRE -->|retry| Deployer
-  SRE -->|rollback| Rollback[Rollback executed] --> CDManager
-  SRE -->|hold| HumanApproval[Human approval required] --> CDManager
-```
-
-This diagram is a simplified overview — each box represents either a human touch point, an AI agent, or an orchestrator step. The details of roles, artifacts, and iteration are fully described in Section 1.
