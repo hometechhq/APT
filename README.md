@@ -245,14 +245,53 @@ The core updates are:
 
 ## 3) Architecture at a Glance
 
-The system is structured around a clear, layered flow:
+The workflow is structured around four phases.  
+Each phase has **clear roles**, **human touch points**, and **explicit artifacts** that become inputs to the next phase.
 
-- **Humans initiate and approve**: a requester submits an idea, stakeholders review design docs, and humans confirm dependencies and approve promotions when required.
-- **Specialized design agents**: Research, Backend, Frontend, Architect, Identity, Data Flow, and Planner agents create both human docs and JSON artifacts.
-- **Dependency prep**: a short human-in-the-loop phase ensures libraries, APIs, credentials, and infrastructure are ready before any build work starts.
-- **Integration loop**: Manager, Implementor, Reviewer, and CI collaborate under n8n orchestration to implement one task at a time, gated by tests and validations.
-- **Deployment loop**: CD Manager, Deployer, DBA, Tester, and SRE Reviewer move the artifact safely through dev → test → stage → prod with health checks, rollbacks, and optional manual approvals.
+### Phase 1: Design
+- **Who acts:** Research Analyst, Backend Designer, Frontend Designer, Architect, Identity Designer, Data Flow, and Planner agents.  
+- **Human role:** requester provides context, stakeholders review and approve each design section.  
+- **Artifacts produced:**  
+  - `/design/docs/<feature>.md` → stakeholder-readable design document (sections for research, backend, frontend, architecture, identity, data flows, roadmap).  
+  - `/design/research.json`  
+  - `/design/backend.json`  
+  - `/design/frontend.json`  
+  - `/design/architecture.json` (validates `/specs/Architecture.schema.json`)  
+  - `/design/identity.json`  
+  - `/design/dataflow.json`  
+  - `/design/plan.json` (validates `/specs/Plan.schema.json`)  
 
-Each phase has **explicit deliverables** (human docs for clarity, JSON artifacts for automation) and **clear quality gates** (reviews, dependencies, CI, tests, health checks).  
-Together, this creates an end-to-end pipeline that is **predictable, auditable, and resumable** from idea all the way to production.
+### Phase 2: Dependency Prep
+- **Who acts:** Dependency Analyst (light agent) + humans confirming readiness.  
+- **Human role:** check availability of libraries, APIs, credentials, and infra; resolve gaps flagged as “manual.”  
+- **Artifacts produced:**  
+  - `/design/docs/<feature>.md` → updated with a “Dependencies Checklist.”  
+  - `/design/dependencies.json` (validates `/specs/Dependencies.schema.json`) → structured list of dependencies with status = `available`, `missing`, or `manual`.  
 
+### Phase 3: Integration
+- **Who acts:** Manager, Implementor, Reviewer, CI gate.  
+- **Human role:** optional intervention if Reviewer escalates or if design/plan adjustments are needed.  
+- **Artifacts produced:**  
+  - Commits: one per task, branch = `feat/<slug>`.  
+  - `/design/plan.json` → updated as tasks progress (`pending`, `in_progress`, `completed`, `skipped`).  
+  - `/state/runs/<run-id>/task-<id>.json` (gitignored) → ReturnEnvelope objects (validates `/specs/ReturnEnvelope.schema.json`) containing diffs, files, tests, costs, and notes.  
+
+### Phase 4: Deployment
+- **Who acts:** CD Manager, Deployer, DBA, Tester, SRE Reviewer.  
+- **Human role:** approvals when `hold_for_approval=true`, and sign-off on production if required.  
+- **Artifacts produced:**  
+  - `/cd/release.json` (validates `/specs/ReleasePlan.schema.json`) → ReleasePlan describing environments, strategies, health budgets, test suites, DB changes.  
+  - `/state/cd/<run-id>/<env>/deploy.json` → DeployEnvelope (validates `/specs/DeployEnvelope.schema.json`) with strategy, executed steps, health, rollback plan.  
+  - `/state/cd/<run-id>/<env>/db.json` → DBChangeEnvelope (validates `/specs/DBChangeEnvelope.schema.json`) with migrations, backup, rollback status.  
+  - `/state/cd/<run-id>/<env>/tests.json` → TestReports (validates `/specs/TestReport.schema.json`) with pass/fail counts and artifacts.  
+  - Logs and execution details under `/state/cd/<run-id>/<env>/`.  
+
+---
+
+**Summary:**  
+- **Design** → `/design/docs/<feature>.md` + JSON specs under `/design/`.  
+- **Dependency Prep** → `/design/dependencies.json` + checklist in docs.  
+- **Integration** → commits, updated `/design/plan.json`, and ReturnEnvelopes in `/state/runs/`.  
+- **Deployment** → `release.json` plus per-environment DeployEnvelope, DBChangeEnvelope, TestReports, and logs in `/state/cd/`.
+
+Together, these artifacts make the process **predictable, auditable, and resumable** from idea through production.
