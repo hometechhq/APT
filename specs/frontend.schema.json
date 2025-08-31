@@ -1,0 +1,199 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Frontend Design Artifact",
+  "description": "Schema for frontend design decisions used by downstream automation",
+  "type": "object",
+  "required": [
+    "feature_id",
+    "version",
+    "created_at",
+    "platforms",
+    "performance",
+    "navigation",
+    "screens",
+    "flows",
+    "accessibility",
+    "i18n",
+    "design_tokens",
+    "client_state",
+    "telemetry",
+    "dependencies",
+    "assumptions",
+    "open_questions"
+  ],
+  "properties": {
+    "feature_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "version": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "enum": ["web", "ios", "android", "desktop", "pwa"] }
+    },
+
+    "performance": {
+      "type": "object",
+      "required": ["lcp_ms", "tti_ms", "bundle_kb"],
+      "properties": {
+        "lcp_ms": { "type": "integer", "minimum": 0 },
+        "tti_ms": { "type": "integer", "minimum": 0 },
+        "bundle_kb": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "navigation": {
+      "type": "object",
+      "required": ["model", "routes"],
+      "properties": {
+        "model": { "type": "string", "enum": ["topnav", "sidebar", "tabbar", "hybrid"] },
+        "routes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "title", "auth_required", "children"],
+            "properties": {
+              "path": { "type": "string" },
+              "title": { "type": "string" },
+              "auth_required": { "type": "boolean" },
+              "children": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/route" }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "screens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "route", "components"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "route": { "type": "string" },
+          "components": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "props_schema", "states"],
+              "properties": {
+                "name": { "type": "string" },
+                "props_schema": { "type": "object", "additionalProperties": true },
+                "states": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["empty", "loading", "error", "success", "disabled", "readonly"]
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "flows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "steps"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "steps": { "type": "array", "items": { "type": "string" } },
+          "edge_cases": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "accessibility": {
+      "type": "object",
+      "required": ["targets", "criteria"],
+      "properties": {
+        "targets": { "type": "string" },
+        "criteria": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "i18n": {
+      "type": "object",
+      "required": ["locales", "rtl_support"],
+      "properties": {
+        "locales": { "type": "array", "items": { "type": "string" } },
+        "rtl_support": { "type": "boolean" },
+        "formatting_notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "design_tokens": {
+      "type": "object",
+      "required": ["typography", "spacing", "colors", "modes"],
+      "properties": {
+        "typography": { "type": "string" },
+        "spacing": { "type": "string" },
+        "colors": { "type": "string" },
+        "modes": { "type": "array", "items": { "type": "string", "enum": ["light", "dark", "auto"] } }
+      },
+      "additionalProperties": false
+    },
+
+    "client_state": {
+      "type": "object",
+      "required": ["cached", "derived", "persistence"],
+      "properties": {
+        "cached": { "type": "array", "items": { "type": "string" } },
+        "derived": { "type": "array", "items": { "type": "string" } },
+        "persistence": { "type": "string", "enum": ["none", "local", "indexdb"] },
+        "sync_rules": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "telemetry": {
+      "type": "object",
+      "required": ["events"],
+      "properties": {
+        "events": { "type": "array", "items": { "type": "string" } },
+        "pii_redaction_rules": { "type": "array", "items": { "type": "string" } },
+        "consent_flows": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "route": {
+      "type": "object",
+      "required": ["path", "title", "auth_required", "children"],
+      "properties": {
+        "path": { "type": "string" },
+        "title": { "type": "string" },
+        "auth_required": { "type": "boolean" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/route" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
