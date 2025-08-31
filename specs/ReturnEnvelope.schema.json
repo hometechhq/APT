@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Return Envelope",
+  "description": "Schema for implementor output (code diffs, tests, checks, budget usage, idempotency flag)",
+  "type": "object",
+  "required": [
+    "task_id",
+    "summary",
+    "patch_strategy",
+    "changes",
+    "run_checks",
+    "notes",
+    "budget_report",
+    "no_op"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "Must match the corresponding plan.json task.id"
+    },
+    "summary": { "type": "string" },
+
+    "patch_strategy": {
+      "type": "string",
+      "enum": ["atomic", "apply_and_test"],
+      "description": "Whether to apply changes atomically or allow staged/tested apply"
+    },
+
+    "test_matrix": {
+      "type": "array",
+      "description": "Optional environment/test matrix (e.g., node18, node20)",
+      "items": { "type": "string" }
+    },
+
+    "changes": {
+      "type": "array",
+      "description": "List of file changes",
+      "items": {
+        "type": "object",
+        "required": ["path", "action", "before_sha256", "after_sha256"],
+        "properties": {
+          "path": { "type": "string" },
+          "action": { "type": "string", "enum": ["create", "modify", "delete"] },
+          "before_sha256": { "type": ["string", "null"] },
+          "after_sha256": { "type": ["string", "null"] },
+          "patch": { "type": "string", "description": "Unified diff (for modify)" },
+          "body": { "type": "string", "description": "Full file body (for create/replace)" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "new_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "deleted_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "run_checks": {
+      "type": "array",
+      "description": "Checks/tests/commands to run after apply",
+      "items": { "type": "string" }
+    },
+
+    "notes": {
+      "type": "string",
+      "description": "Deterministic rationale, warnings, or clarifications"
+    },
+
+    "budget_report": {
+      "type": "object",
+      "required": ["calls_used", "usd_estimate", "within_budget"],
+      "properties": {
+        "calls_used": { "type": "integer", "minimum": 0 },
+        "usd_estimate": { "type": "number", "minimum": 0 },
+        "within_budget": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+
+    "no_op": {
+      "type": "boolean",
+      "description": "True when skip_if_satisfied[] meant no work was required"
+    }
+  },
+  "additionalProperties": false
+}
