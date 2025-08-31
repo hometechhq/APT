@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Architecture Design Artifact",
+  "description": "Schema for environment/runtime/network/ops decisions used by downstream automation",
+  "type": "object",
+  "required": [
+    "feature_id",
+    "version",
+    "created_at",
+    "cloud",
+    "runtime",
+    "data",
+    "network",
+    "secrets",
+    "environments",
+    "approvals",
+    "observability",
+    "cost",
+    "dependencies",
+    "assumptions",
+    "open_questions"
+  ],
+  "properties": {
+    "feature_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "version": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "cloud": {
+      "type": "object",
+      "required": ["provider", "regions", "residency"],
+      "properties": {
+        "provider": { "type": "string", "enum": ["azure", "aws", "gcp", "multi"] },
+        "regions": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "dr_region": { "type": "string" },
+        "residency": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "runtime": {
+      "type": "object",
+      "required": ["mode", "platforms"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["containers", "serverless", "mixed"] },
+        "platforms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "aks","app_service","functions",
+              "eks","lambda","fargate","ecs",
+              "gke","cloud_run","app_engine",
+              "vm","batch","other"
+            ]
+          }
+        },
+        "batch_queues": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "data": {
+      "type": "object",
+      "required": ["datastores", "backup", "encryption"],
+      "properties": {
+        "datastores": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["kind", "engine", "tier", "ha"],
+            "properties": {
+              "kind": { "type": "string", "enum": ["sql", "nosql", "blob", "cache", "search", "queue"] },
+              "engine": { "type": "string" },
+              "tier": { "type": "string" },
+              "ha": { "type": "string", "enum": ["single", "multi-az", "geo"] },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "backup": {
+          "type": "object",
+          "required": ["rpo_minutes", "rto_minutes"],
+          "properties": {
+            "rpo_minutes": { "type": "integer", "minimum": 0 },
+            "rto_minutes": { "type": "integer", "minimum": 0 },
+            "policy_notes": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "encryption": {
+          "type": "object",
+          "required": ["at_rest", "in_transit"],
+          "properties": {
+            "at_rest": { "type": "string" },
+            "in_transit": { "type": "string" },
+            "kms": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "network": {
+      "type": "object",
+      "required": ["ingress", "egress", "connectivity"],
+      "properties": {
+        "ingress": {
+          "type": "object",
+          "required": ["exposure"],
+          "properties": {
+            "exposure": { "type": "string", "enum": ["public", "private", "mixed"] },
+            "waf": { "type": "string" },
+            "cdn": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "egress": {
+          "type": "object",
+          "properties": {
+            "allowlist": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "connectivity": {
+          "type": "object",
+          "properties": {
+            "vnet_peering": { "type": "boolean" },
+            "private_link": { "type": "boolean" },
+            "vpn": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "secrets": {
+      "type": "object",
+      "required": ["manager", "oidc_github"],
+      "properties": {
+        "manager": { "type": "string", "enum": ["key_vault", "secrets_manager", "secret_manager", "other"] },
+        "oidc_github": { "type": "boolean" },
+        "rotation_policy": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "environments": {
+      "type": "object",
+      "required": ["list", "isolation", "release_strategy"],
+      "properties": {
+        "list": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["dev", "test", "stage", "prod"] }
+        },
+        "isolation": { "type": "string", "enum": ["namespace", "cluster", "account", "subscription", "project"] },
+        "release_strategy": { "type": "string", "enum": ["rolling", "blue_green", "canary"] }
+      },
+      "additionalProperties": false
+    },
+
+    "approvals": {
+      "type": "object",
+      "required": ["stage_validation_steps", "prod_validation_steps"],
+      "properties": {
+        "stage_validation_steps": { "type": "array", "items": { "type": "string" } },
+        "prod_validation_steps": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "observability": {
+      "type": "object",
+      "required": ["logging", "metrics", "tracing"],
+      "properties": {
+        "logging": { "type": "string" },
+        "metrics": { "type": "string" },
+        "tracing": { "type": "string" },
+        "slo": {
+          "type": "object",
+          "properties": {
+            "p95_latency_ms": { "type": "integer", "minimum": 0 },
+            "availability_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "additionalProperties": false
+        },
+        "runbooks": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "cost": {
+      "type": "object",
+      "properties": {
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "budget_notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
