@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Reviewer Verdict",
+  "description": "Schema for the Reviewer Agent's decision on a single task's Return Envelope",
+  "type": "object",
+  "required": ["task_id", "verdict", "errors", "retry_suggested", "escalate", "logs"],
+  "properties": {
+    "task_id": { "type": "string" },
+
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail"],
+      "description": "Final, deterministic outcome"
+    },
+
+    "errors": {
+      "type": "array",
+      "description": "Human-readable validation failures (empty when verdict=pass)",
+      "items": { "type": "string" }
+    },
+
+    "retry_suggested": {
+      "type": "boolean",
+      "description": "True if implementor should retry with same model"
+    },
+
+    "escalate": {
+      "type": "boolean",
+      "description": "True if task should be escalated to a stronger model (e.g., gpt-5-mini)"
+    },
+
+    "logs": {
+      "type": "array",
+      "description": "Deterministic reasoning summary; no sensitive data",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
