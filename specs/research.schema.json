@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Research Artifact",
+  "description": "Schema for market research and product prospectus outputs in the Design phase",
+  "type": "object",
+  "required": [
+    "feature_id",
+    "version",
+    "created_at",
+    "personas",
+    "jobs_to_be_done",
+    "market_sizing",
+    "competitors",
+    "pricing",
+    "cost_to_deliver",
+    "gtm",
+    "risks",
+    "evidence",
+    "assumptions",
+    "open_questions"
+  ],
+  "properties": {
+    "feature_id": {
+      "type": "string",
+      "description": "Unique slug for the feature/product being researched"
+    },
+    "version": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "personas": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "jobs_to_be_done": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "market_sizing": {
+      "type": "object",
+      "required": ["tam", "sam", "som", "currency", "time_horizon_months", "assumptions", "confidence"],
+      "properties": {
+        "tam": { "type": "number", "minimum": 0 },
+        "sam": { "type": "number", "minimum": 0 },
+        "som": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+        "time_horizon_months": { "type": "integer", "minimum": 1 },
+        "assumptions": { "type": "array", "items": { "type": "string" } },
+        "confidence": { "type": "string", "enum": ["low", "medium", "high"] }
+      }
+    },
+
+    "competitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "category"],
+        "properties": {
+          "name": { "type": "string" },
+          "category": { "type": "string" },
+          "strengths": { "type": "array", "items": { "type": "string" } },
+          "weaknesses": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+
+    "pricing": {
+      "type": "object",
+      "required": ["model", "tiers"],
+      "properties": {
+        "model": { "type": "string", "enum": ["free", "freemium", "subscription", "enterprise", "usage_based", "hybrid"] },
+        "tiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "price_per_unit", "unit", "included_features"],
+            "properties": {
+              "name": { "type": "string" },
+              "price_per_unit": { "type": "number", "minimum": 0 },
+              "unit": { "type": "string", "enum": ["month", "year", "seat", "transaction", "api_call", "other"] },
+              "included_features": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+
+    "cost_to_deliver": {
+      "type": "object",
+      "required": ["variable_costs", "fixed_costs"],
+      "properties": {
+        "variable_costs": { "type": "array", "items": { "type": "string" } },
+        "fixed_costs": { "type": "array", "items": { "type": "string" } },
+        "sensitivity": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "gtm": {
+      "type": "object",
+      "required": ["channels", "integrations"],
+      "properties": {
+        "channels": { "type": "array", "items": { "type": "string" } },
+        "integrations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "likelihood", "impact"],
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "string" },
+          "likelihood": { "type": "string", "enum": ["low", "medium", "high"] },
+          "impact": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+          "mitigations": { "type": "array", "items": { "type": "string" } },
+          "tripwires": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_type", "name", "confidence"],
+        "properties": {
+          "source_type": { "type": "string", "enum": ["internal", "report", "analyst", "public_filing", "pilot", "other"] },
+          "name": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "notes": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] }
+        }
+      }
+    },
+
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
