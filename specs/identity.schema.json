@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Identity Design Artifact",
+  "description": "Schema for authentication, authorization, federation, and audit requirements",
+  "type": "object",
+  "required": [
+    "feature_id",
+    "version",
+    "created_at",
+    "authentication",
+    "authorization",
+    "federation",
+    "compliance",
+    "dependencies",
+    "assumptions",
+    "open_questions"
+  ],
+  "properties": {
+    "feature_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "version": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+
+    "authentication": {
+      "type": "object",
+      "required": ["idps", "protocols", "mfa"],
+      "properties": {
+        "idps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["azuread", "entra", "okta", "google", "auth0", "custom"] }
+        },
+        "protocols": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "enum": ["oidc", "saml", "ldap", "scim"] }
+        },
+        "mfa": {
+          "type": "object",
+          "required": ["methods", "required"],
+          "properties": {
+            "methods": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["totp", "sms", "fido2", "push", "webauthn", "email", "other"] }
+            },
+            "required": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "authorization": {
+      "type": "object",
+      "required": ["roles", "model"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "permissions"],
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "permissions": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          }
+        },
+        "model": { "type": "string", "enum": ["rbac", "abac", "hybrid"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "federation": {
+      "type": "object",
+      "required": ["external_users", "trust_boundaries", "provisioning"],
+      "properties": {
+        "external_users": { "type": "boolean" },
+        "trust_boundaries": { "type": "array", "items": { "type": "string" } },
+        "provisioning": {
+          "type": "object",
+          "required": ["method"],
+          "properties": {
+            "method": { "type": "string", "enum": ["manual", "scim", "hris_sync", "custom"] },
+            "source": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "compliance": {
+      "type": "object",
+      "required": ["audit_events", "retention_days", "log_destinations"],
+      "properties": {
+        "audit_events": { "type": "array", "items": { "type": "string" } },
+        "retention_days": { "type": "integer", "minimum": 0 },
+        "log_destinations": { "type": "array", "items": { "type": "string" } },
+        "regulations": { "type": "array", "items": { "type": "string", "enum": ["iso27001", "soc2", "gdpr", "hipaa", "fedramp", "other"] } }
+      },
+      "additionalProperties": false
+    },
+
+    "dependencies": { "type": "array", "items": { "type": "string" } },
+    "assumptions": { "type": "array", "items": { "type": "string" } },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
