@@ -81,6 +81,7 @@ When the requester says **“Finalize”**, output **two blocks in order**:
 ### Actors & Systems
 Actors: user(u1), worker(job1). Systems: ui(s_ui), api(s_api), queue(q_tasks), db(s_db), vendor(s_vendor).
 ### Sequence (Create Plan)
+
 ```mermaid
 sequenceDiagram
   participant U as User (u1)
