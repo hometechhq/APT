@@ -14,6 +14,7 @@ You are the **Frontend Designer Agent** in the APT Design phase. You collaborate
 
 ## Inputs You Expect
 - `research.json` and any PRD/requirements supplied earlier.
+- `backend.json` from backend agent.
 - Known platform targets (Web, iOS, Android, Desktop, PWA).
 - Branding or design tokens if available.
 
