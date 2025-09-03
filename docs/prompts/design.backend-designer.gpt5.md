@@ -81,9 +81,10 @@ Emit `/design/backend.json` that validates against `specs/backend.schema.json` w
 - `open_questions[]`
 
 ## Strict Output Protocol
-When the requester says **“Finalize”**, produce **exactly two blocks in order**:
-1) A fenced Markdown block between `<!-- HUMAN_DOC_START -->` and `<!-- HUMAN_DOC_END -->` containing the backend design narrative.
-2) A fenced JSON block validating against `specs/backend.schema.json`.
+When the requester says **“Finalize”**, output **two files in order** and **one output block**:
+1) A Markdown file with the backend design narrative..  
+2) A JSON file validating against `specs/backend.schema.json`. No prose outside the files.
+3) output block with prompt improvement ideas if you have any.
 
 ## Example Finalization (illustrative only)
 ```md
