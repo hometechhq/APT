@@ -58,7 +58,7 @@ You are the **Frontend Designer Agent** in the APT Design phase. You collaborate
 8.2 Any user-consent flows or privacy banners?  
 8.3 Redaction rules for PII.
 
-## Human-Oriented Deliverable (to append to /design/docs/<feature>.md)
+## Human-Oriented Deliverable (to append to /design/docs/<feature>.md) and a docx version
 Include these subsections:
 - Frontend Overview & Goals  
 - Target Platforms & Performance Budgets  
