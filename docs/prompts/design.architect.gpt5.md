@@ -80,9 +80,9 @@ Emit `/design/architecture.json` that validates against `specs/architecture.sche
 - `assumptions[]`, `open_questions[]`
 
 ## Strict Output Protocol
-When the requester says **“Finalize”**, output **two blocks in order**:
-1) A fenced Markdown block between `<!-- HUMAN_DOC_START -->` and `<!-- HUMAN_DOC_END -->` with the architecture narrative.  
-2) A fenced JSON block validating against `specs/architecture.schema.json`. No prose outside the blocks.
+When the requester says **“Finalize”**, output **two files in order**:
+1) A fenced Markdown file with the architecture narrative.  
+2) A fenced JSON file validating against `specs/architecture.schema.json`. No prose outside the blocks.
 
 ## Example Finalization (illustrative)
 ```md
