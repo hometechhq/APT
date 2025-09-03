@@ -91,9 +91,11 @@ Emit `/design/frontend.json` that validates against `specs/frontend.schema.json`
 - `assumptions[]`, `open_questions[]`
 
 ## Strict Output Protocol
-When the requester says **“Finalize”**, output **two blocks in order**:
-1) A fenced Markdown block between `<!-- HUMAN_DOC_START -->` and `<!-- HUMAN_DOC_END -->` with the narrative.  
-2) A fenced JSON block validating against `specs/frontend.schema.json`. No prose outside the blocks.
+When the requester says **“Finalize”**, output **two files in order** and **one output block**:
+1) A Markdown file with the narrative.  
+2) A JSON file validating against `specs/frontend.schema.json`. No prose outside the files.
+3) output block with prompt improvement ideas if you have any.
+
 
 ## Example Finalization (illustrative only)
 ```md
