@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Handoff Event",
+  "description": "Schema for a single event line in /state/handoffs/events.jsonl",
+  "type": "object",
+  "required": ["event", "agent", "feature_id", "ts"],
+  "properties": {
+    "event": {
+      "type": "string",
+      "enum": [
+        "artifact_written",
+        "artifact_needed",
+        "agent_started",
+        "agent_completed",
+        "error",
+        "lock_acquired",
+        "lock_released"
+      ]
+    },
+    "agent": {
+      "type": "string",
+      "description": "Name of the agent emitting the event (e.g., research, backend, planner)"
+    },
+    "feature_id": {
+      "type": "string",
+      "description": "Slug or identifier for the feature this event belongs to"
+    },
+    "artifact": {
+      "type": "string",
+      "description": "Path of the artifact file (if applicable, e.g., /design/research.json)"
+    },
+    "sha": {
+      "type": "string",
+      "description": "Git SHA or content hash of the artifact (if applicable)"
+    },
+    "needs": {
+      "type": "array",
+      "description": "List of required artifacts when event=artifact_needed",
+      "items": { "type": "string" }
+    },
+    "owner": {
+      "type": "string",
+      "description": "Optional human owner/contact responsible for resolving a needed artifact"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message when event=error"
+    },
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp in RFC3339"
+    }
+  },
+  "additionalProperties": false
+}
