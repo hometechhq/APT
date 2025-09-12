@@ -1,0 +1,3 @@
+# Transient runtime state
+state/*
+!state/.gitkeep
