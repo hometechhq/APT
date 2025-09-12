@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "DB Change Envelope",
+  "description": "Database backup, migration, and rollback details",
+  "type": "object",
+  "required": ["env", "before_version", "after_version", "backup", "migrations", "rollback"],
+  "properties": {
+    "env": { "type": "string", "enum": ["dev", "test", "stage", "prod"], "description": "Target environment" },
+    "before_version": { "type": "string", "description": "Schema version before migration" },
+    "after_version": { "type": "string", "description": "Schema version after migration" },
+    "backup": {
+      "type": "object",
+      "required": ["location"],
+      "properties": {
+        "location": { "type": "string", "description": "Where the backup is stored" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Backup timestamp" },
+        "verified": { "type": "boolean", "description": "Backup integrity confirmed" }
+      },
+      "additionalProperties": false
+    },
+    "migrations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string", "description": "Migration identifier" },
+          "description": { "type": "string", "description": "Migration summary" },
+          "status": { "type": "string", "enum": ["pending", "applied", "failed"], "description": "Execution result" },
+          "logs": { "type": "string", "description": "Migration logs" }
+        },
+        "additionalProperties": false
+      },
+      "description": "Executed migrations"
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["commands"],
+      "properties": {
+        "commands": { "type": "array", "items": { "type": "string" }, "description": "Rollback commands" },
+        "verification": { "type": "array", "items": { "type": "string" }, "description": "Post-rollback checks" }
+      },
+      "additionalProperties": false
+    },
+    "notes": { "type": "string", "description": "Additional DBA notes" }
+  },
+  "additionalProperties": false
+}
