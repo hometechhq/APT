@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Release Plan",
+  "description": "Ordered promotion plan across environments",
+  "type": "object",
+  "required": ["release_id", "version", "created_at", "environments"],
+  "properties": {
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$",
+      "description": "Unique identifier for this release"
+    },
+    "version": { "type": "string", "description": "Version of the release plan" },
+    "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+    "environments": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Promotion order from dev to prod",
+      "items": {
+        "type": "object",
+        "required": ["name", "strategy", "tests", "health", "hold_for_approval"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["dev", "test", "stage", "prod"],
+            "description": "Target environment"
+          },
+          "strategy": {
+            "type": "string",
+            "enum": ["rolling", "blue_green", "canary"],
+            "description": "Deployment strategy"
+          },
+          "hold_for_approval": { "type": "boolean", "description": "Require human approval before promotion" },
+          "tests": { "type": "array", "items": { "type": "string" }, "description": "Test suites to run" },
+          "health": {
+            "type": "object",
+            "required": ["checks", "error_budget_minutes"],
+            "properties": {
+              "checks": { "type": "array", "items": { "type": "string" }, "description": "Health commands or probes" },
+              "error_budget_minutes": { "type": "number", "minimum": 0, "description": "Allowed minutes of failed health" }
+            },
+            "additionalProperties": false
+          },
+          "db_changes": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Database change script IDs or descriptions"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

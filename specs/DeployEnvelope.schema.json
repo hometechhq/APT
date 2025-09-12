@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Deploy Envelope",
+  "description": "Deployment attempt details with rollback plan",
+  "type": "object",
+  "required": ["env", "strategy", "commands", "health_checks", "rollback"],
+  "properties": {
+    "env": { "type": "string", "enum": ["dev", "test", "stage", "prod"], "description": "Target environment" },
+    "strategy": { "type": "string", "enum": ["rolling", "blue_green", "canary"], "description": "Deployment strategy" },
+    "commands": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Commands or Helm values to perform deployment"
+    },
+    "health_checks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Post-deploy health validations"
+    },
+    "rollback": {
+      "type": "object",
+      "required": ["commands"],
+      "properties": {
+        "commands": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Rollback commands"
+        },
+        "verification": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Checks after rollback"
+        }
+      },
+      "additionalProperties": false
+    },
+    "notes": { "type": "string", "description": "Additional deployment details" }
+  },
+  "additionalProperties": false
+}

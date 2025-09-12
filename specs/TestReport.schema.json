@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Test Report",
+  "description": "Results of executing a test suite",
+  "type": "object",
+  "required": ["env", "suite", "command", "status", "stats"],
+  "properties": {
+    "env": { "type": "string", "enum": ["dev", "test", "stage", "prod"], "description": "Environment where tests ran" },
+    "suite": { "type": "string", "description": "Name of the test suite" },
+    "command": { "type": "string", "description": "Command used to run the suite" },
+    "status": { "type": "string", "enum": ["passed", "failed"], "description": "Overall result" },
+    "stats": {
+      "type": "object",
+      "required": ["passed", "failed", "skipped"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0, "description": "Number of passing tests" },
+        "failed": { "type": "integer", "minimum": 0, "description": "Number of failing tests" },
+        "skipped": { "type": "integer", "minimum": 0, "description": "Number of skipped tests" }
+      },
+      "additionalProperties": false
+    },
+    "logs": { "type": "array", "items": { "type": "string" }, "description": "Relevant log lines" },
+    "artifacts": { "type": "array", "items": { "type": "string" }, "description": "Links or paths to generated artifacts" }
+  },
+  "additionalProperties": false
+}
