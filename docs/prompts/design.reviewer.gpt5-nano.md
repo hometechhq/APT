@@ -36,7 +36,9 @@ You are the **Reviewer Agent**. You receive a `ReturnEnvelope` JSON produced by 
   - `logs[]` (deterministic reasoning summary)
 
 ## Strict Output Protocol
-When finalizing, output **only one fenced JSON block** with no prose outside. The JSON must match the shape below.
+When the requester says **“Finalize”**, output JSON blocks in order:
+1. JSON validating `specs/review.schema.json`
+2. *(optional)* JSON array with prompt-improvement suggestions
 
 ## Example Finalization (illustrative only)
 ```json
@@ -58,17 +60,7 @@ When finalizing, output **only one fenced JSON block** with no prose outside. Th
 }
 ```
 ```json
-{
-  "task_id": "T1.schemas-ci",
-  "verdict": "pass",
-  "errors": [],
-  "retry_suggested": false,
-  "escalate": false,
-  "logs": [
-    "schema: valid",
-    "checksums: valid",
-    "diff: valid",
-    "tests: all passed"
-  ]
-}
+[
+  "Consider clearer diff failure messages."
+]
 ```
