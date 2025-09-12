@@ -45,11 +45,11 @@ You are the **Planner Agent**. You consume prior Design outputs and produce a de
 
 ## JSON Artifacts
 - **`/design/plan.json`** — must validate `specs/Plan.schema.json`.
-- **`/design/dependencies.json`** — must validate `specs/dependencies.schema.json`.
+- **`/design/dependencies.json`** — must validate `specs/Dependencies.schema.json`.
 
 ## Strict Output Protocol
 When the requester says **“Finalize”**, output JSON blocks in order:
-1. JSON object containing `plan` and `dependencies` validating `specs/Plan.schema.json` and `specs/dependencies.schema.json`
+1. JSON object containing `plan` and `dependencies` validating `specs/Plan.schema.json` and `specs/Dependencies.schema.json`
 2. *(optional)* JSON array with prompt-improvement suggestions
 
 ## CI/Gating Guidance (baked into your outputs)
