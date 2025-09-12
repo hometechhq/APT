@@ -2,6 +2,13 @@
 
 ## 1) Project Overview
 
+### Repository Structure
+
+- `design/` - human design docs and machine artifacts
+- `cd/` - deployment plans
+- `docs/runs/` - audit snapshots of completed runs
+- `state/` - runtime state (gitignored)
+
 **AI Dev Tasks** is a schema-first, orchestrator-driven framework that turns a feature idea into deployed code through four phases:
 
 1. **Design Phase (ChatGPT) — dual-audience & modular**
