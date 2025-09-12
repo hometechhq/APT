@@ -50,6 +50,11 @@
             "enum": ["pending", "in_progress", "blocked", "done"],
             "description": "Current task state"
           },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when task moved to in_progress"
+          },
           "depends_on": { "type": "array", "items": { "type": "string" }, "description": "Prerequisite task IDs" },
           "external_dependencies": { "type": "array", "items": { "type": "string" }, "description": "IDs from dependencies.json" },
           "files_to_touch": { "type": "array", "items": { "type": "string" }, "description": "Paths allowed to change" },
