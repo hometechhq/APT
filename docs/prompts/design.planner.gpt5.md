@@ -45,6 +45,11 @@ You are the **Planner Agent**. You consume prior Design outputs and produce a de
 5.2 For each, specify `kind`, `provider`, `provisioner_hint`, `security.secrets_location`, `status` (default `to_provision`), and `owner`.  
 5.3 Output the machine-readable `dependencies.json` for CI gating.
 
+6. Codex task handoff
+6.1 Assemble the Codex task list (`codex_tasks[]`) from the final plan so each entry mirrors `files_to_touch`, validations, and skip logic in friendly prose.
+6.2 Append or refresh a `## Codex Tasks` section at the end of `/AGENTS.md` containing the JSON export for Codex agents.
+6.3 If `/AGENTS.md` cannot be modified, emit the same payload to `/docs/tasks.codex.json` instead and reference the fallback in the run summary.
+
 ## JSON Artifacts
 - **`/design/plan.json`** — must validate `specs/Plan.schema.json`.
 - **`/design/dependencies.json`** — must validate `specs/Dependencies.schema.json`.
