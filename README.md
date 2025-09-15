@@ -7,6 +7,7 @@
 - `design/` - human design docs and machine artifacts
 - `research/` - raw research transcripts, notes, and evidence captured before synthesis
 - `cd/` - deployment plans
+- `docs/prompts/` - orchestrator prompts for codex and n8n agents, including the [Product Manager kickoff brief](docs/prompts/product-manager-agent.gpt5.md)
 - `docs/runs/` - audit snapshots of completed runs
 - `state/` - runtime state (gitignored)
 
@@ -394,37 +395,35 @@ This makes the process predictable, auditable, and easy to resume.
 
 ### Top-Level Directories
 
-- **`/design/`** — Design & dependency phase outputs  
-  - `/design/docs/<feature>.md` → human-readable design document (narrative spec, approved by stakeholders).  
-  - `/design/*.json` → machine-readable artifacts (research, backend, frontend, architecture, identity, dataflow, plan, dependencies).  
+- **`/design/`** — Design & dependency phase outputs
+  - `/design/docs/<feature>.md` → human-readable design document (narrative spec, approved by stakeholders).
+  - `/design/*.json` → machine-readable artifacts (research, backend, frontend, architecture, identity, dataflow, plan, dependencies).
 
-- **`/specs/`** — JSON Schemas used to validate agent outputs.  
-  - **Key files:**  
-    - `Plan.schema.json` — structure of the execution DAG.  
-    - `ReturnEnvelope.schema.json` — structure of Implementor outputs.  
-    - `ReleasePlan.schema.json` — environment promotion plan.  
+- **`/research/`** — Source interviews, transcripts, and market notes captured before synthesis.
+
+- **`/specs/`** — JSON Schemas used to validate agent outputs.
+  - **Key files:**
+    - `Plan.schema.json` — structure of the execution DAG.
+    - `ReturnEnvelope.schema.json` — structure of Implementor outputs.
+    - `ReleasePlan.schema.json` — environment promotion plan.
   - Additional schemas cover design modules (research, backend, frontend, identity, dataflow, dependencies, etc.).
 
-- **`/state/`** — Runtime state (gitignored; not checked in)  
-  - `/state/runs/<run-id>/task-<id>.json` → ReturnEnvelopes from integration.  
-  - `/state/cd/<run-id>/<env>/...` → Deployment artifacts: DeployEnvelope, DBChangeEnvelope, TestReports, logs.  
+- **`/cd/`** — Deployment planning inputs
+  - `/cd/release.json` → ReleasePlan describing environments, strategies, health budgets, test suites, DB changes.
 
-- **`/cd/`** — Deployment planning inputs  
-  - `/cd/release.json` → ReleasePlan describing environments, strategies, health budgets, test suites, DB changes.  
+- **`/docs/prompts/`** — Prompt templates for codex and n8n agents (Product Manager kickoff, research, design, integration, CD).
 
-- **`/docs/planning/`** — Prompt templates and guides for design  
-  - `TEAM.chat.md`, individual module prompts, planner prompt, dependencies prompt, `USAGE-n8n.md`.  
+- **`/docs/templates/`** — Run templates and governance checklists for humans.
 
-- **`/docs/cd/`** — Prompt templates and guides for deployment  
-  - Prompts for CD Manager, Deployer, DBA, Tester, SRE Reviewer.  
-  - `USAGE-CD.md` → guide to set up n8n CD workflow.  
+- **`/docs/runs/`** — Durable audit snapshots captured after each automation run.
 
-- **`/tools/`** — Orchestrator-side scripts and helpers  
-  - `repo-snapshot.mjs`, `apply-envelope.mjs`, `deploy.mjs`, `run-tests.mjs`, `healthcheck.mjs`, `backup-db.mjs`, `migrate-db.mjs`.  
+- **`/docs/samples/`** — Example artifacts illustrating schema-compliant outputs.
 
-- **`/.github/workflows/`** — CI definitions  
-  - `validate-schemas.yml` → validate design and plan files.  
-  - Additional workflows for lint, tests, build (project-specific).  
+- **`/scripts/`** — Orchestrator helpers for applying envelopes, running tests, and garbage collection.
+
+- **`/state/`** — Runtime state (gitignored; not checked in)
+  - `/state/runs/<run-id>/task-<id>.json` → ReturnEnvelopes from integration.
+  - `/state/cd/<run-id>/<env>/...` → Deployment artifacts: DeployEnvelope, DBChangeEnvelope, TestReports, logs.
 
 ### Lifecycle Mapping
 
