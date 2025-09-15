@@ -17,7 +17,8 @@
     "risks",
     "evidence",
     "assumptions",
-    "open_questions"
+    "open_questions",
+    "dependencies"
   ],
   "properties": {
     "feature_id": {
@@ -138,7 +139,8 @@
     },
 
     "assumptions": { "type": "array", "items": { "type": "string" } },
-    "open_questions": { "type": "array", "items": { "type": "string" } }
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "dependencies": { "type": "array", "items": { "type": "string" } }
   },
   "additionalProperties": false
 }
