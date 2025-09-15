@@ -1,0 +1,212 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Raw Research Capture",
+  "description": "Schema for storing unsummarized research findings captured during discovery sweeps.",
+  "type": "object",
+  "required": [
+    "feature_id",
+    "version",
+    "captured_at",
+    "research_objectives",
+    "entries"
+  ],
+  "properties": {
+    "feature_id": {
+      "type": "string",
+      "description": "Unique slug for the feature or initiative this research supports.",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic or chronological version for this raw research capture."
+    },
+    "captured_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this bundle of findings was written to disk."
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional timestamp after which the findings should be refreshed."
+    },
+    "research_objectives": {
+      "type": "array",
+      "description": "Objectives or questions the sweep set out to answer.",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "queries": {
+      "type": "array",
+      "description": "Search queries or prompts issued during this sweep.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional freeform notes about how to interpret the entries."
+    },
+    "entries": {
+      "type": "array",
+      "description": "Raw, unsummarized findings captured from individual sources.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "collected_at",
+          "content_type",
+          "content"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this finding (e.g., UUID or slug)."
+          },
+          "query": {
+            "type": "string",
+            "description": "Search query or question that produced this finding."
+          },
+          "source": {
+            "type": "object",
+            "description": "Metadata describing where the finding came from.",
+            "required": [
+              "name",
+              "type"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Publisher, site, interviewee, or dataset name."
+              },
+              "type": {
+                "type": "string",
+                "description": "Classification of the source.",
+                "enum": [
+                  "web",
+                  "document",
+                  "interview",
+                  "internal",
+                  "api",
+                  "dataset",
+                  "other"
+                ]
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Resolvable link to the source when available."
+              },
+              "authors": {
+                "type": "array",
+                "description": "People or organizations credited for the source.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "published_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Publication timestamp when the source itself was created."
+              },
+              "access_notes": {
+                "type": "string",
+                "description": "Instructions, paywall notes, or context for retrieving the source again."
+              }
+            },
+            "additionalProperties": false
+          },
+          "collected_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when this specific finding was captured."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Format of the captured content.",
+            "enum": [
+              "text",
+              "table",
+              "image",
+              "audio",
+              "video",
+              "code",
+              "other"
+            ]
+          },
+          "content": {
+            "type": "string",
+            "description": "Verbatim or raw transcript of the finding."
+          },
+          "highlights": {
+            "type": "array",
+            "description": "Optional callouts or excerpts to revisit later.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relevance": {
+            "type": "object",
+            "description": "Why the finding matters for the research objectives.",
+            "required": [
+              "score",
+              "justification"
+            ],
+            "properties": {
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Normalized relevance score between 0 and 1."
+              },
+              "justification": {
+                "type": "string",
+                "description": "One or two sentences linking the finding back to the objective."
+              }
+            },
+            "additionalProperties": false
+          },
+          "tags": {
+            "type": "array",
+            "description": "Searchable keywords attached to the finding.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "license": {
+            "type": "string",
+            "description": "Usage rights or license details for the content."
+          },
+          "checksum": {
+            "type": "string",
+            "description": "Optional hash of the raw content for deduplication."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Analyst notes that do not summarize or interpret the finding."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "supersedes": {
+      "type": "array",
+      "description": "Paths or identifiers for earlier raw research files replaced by this one.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "related_artifacts": {
+      "type": "array",
+      "description": "Links to downstream artifacts (plans, design docs) that rely on this data.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false
+}
