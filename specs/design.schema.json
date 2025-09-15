@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Design Artifact Assembly",
+  "description": "Composite schema linking all design-phase artifacts into a single bundle for orchestration",
+  "type": "object",
+  "required": [
+    "assembled_at",
+    "research",
+    "backend",
+    "frontend",
+    "identity",
+    "architecture",
+    "dataflow",
+    "plan",
+    "dependencies"
+  ],
+  "properties": {
+    "assembled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when the bundle was produced"
+    },
+    "research": {
+      "description": "Latest research artifact",
+      "anyOf": [
+        { "$ref": "./research.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "backend": {
+      "description": "Backend design deliverable",
+      "anyOf": [
+        { "$ref": "./backend.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "frontend": {
+      "description": "Frontend design deliverable",
+      "anyOf": [
+        { "$ref": "./frontend.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "identity": {
+      "description": "Identity and access design deliverable",
+      "anyOf": [
+        { "$ref": "./identity.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "architecture": {
+      "description": "Architecture design deliverable",
+      "anyOf": [
+        { "$ref": "./architecture.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "dataflow": {
+      "description": "Dataflow design deliverable",
+      "anyOf": [
+        { "$ref": "./dataflow.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "plan": {
+      "description": "Integration plan",
+      "anyOf": [
+        { "$ref": "./Plan.schema.json" },
+        { "type": "null" }
+      ]
+    },
+    "dependencies": {
+      "description": "Dependency preparation artifact",
+      "anyOf": [
+        { "$ref": "./Dependencies.schema.json" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
