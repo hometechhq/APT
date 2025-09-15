@@ -434,12 +434,15 @@ This makes the process predictable, auditable, and easy to resume.
 - **`/docs/planning/`** — Prompt templates and guides for design  
   - `TEAM.chat.md`, individual module prompts, planner prompt, dependencies prompt, `USAGE-n8n.md`.  
 
-- **`/docs/cd/`** — Prompt templates and guides for deployment  
-  - Prompts for CD Manager, Deployer, DBA, Tester, SRE Reviewer.  
-  - `USAGE-CD.md` → guide to set up n8n CD workflow.  
+- **`/docs/cd/`** — Prompt templates and guides for deployment
+  - Prompts for CD Manager, Deployer, DBA, Tester, SRE Reviewer.
+  - `USAGE-CD.md` → guide to set up n8n CD workflow.
 
-- **`/tools/`** — Orchestrator-side scripts and helpers  
-  - `repo-snapshot.mjs`, `apply-envelope.mjs`, `deploy.mjs`, `run-tests.mjs`, `healthcheck.mjs`, `backup-db.mjs`, `migrate-db.mjs`.  
+- **`/docs/templates/`** — Ready-to-use document templates for stakeholders.
+  - `design.doc.md` and `prd.md` align human narratives with the JSON schemas used by automation.
+
+- **`/tools/`** — Orchestrator-side scripts and helpers
+  - `repo-snapshot.mjs`, `apply-envelope.mjs`, `deploy.mjs`, `run-tests.mjs`, `healthcheck.mjs`, `backup-db.mjs`, `migrate-db.mjs`.
 
 - **`/.github/workflows/`** — CI definitions  
   - `validate-schemas.yml` → validate design and plan files.  
@@ -458,12 +461,14 @@ This keeps the workflow predictable, auditable, and safe for automation.
 
 ### Core Contracts
 
-- **PRD (`/specs/Prd.schema.json`)**  
-  Defines the structure of a Product Requirements Document in JSON.  
-  • Title, goals, non-functional requirements.  
-  • Functional requirements with acceptance criteria.  
-  • Risks, assumptions, and release slices.  
-  • Basis for both stakeholder docs and the Planner’s task DAG.
+- **PRD (`/specs/Prd.schema.json`)**
+  Defines the structure of a Product Requirements Document in JSON.
+  • Title plus the narrative context for the initiative.
+  • Goals with success metrics and prioritization.
+  • Requirements with category, priority, and goal links.
+  • Acceptance criteria mapped to each requirement.
+  • Risks with mitigation ownership and status.
+  • Human-readable companion template: `/docs/templates/prd.md`.
 
 - **Plan (`/specs/Plan.schema.json`)**  
   Represents the execution plan (task DAG).  
