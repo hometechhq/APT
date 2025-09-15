@@ -7,7 +7,42 @@
 - `design/` - human design docs and machine artifacts
 - `cd/` - deployment plans
 - `docs/runs/` - audit snapshots of completed runs
+- `research/` - raw, unsummarized discovery artifacts (see the Research Repository section)
 - `state/` - runtime state (gitignored)
+
+### Human Interface Agent & Product Tooling
+
+The **Human Interface Agent (HIA)** is the first touch point for human requesters and the rest of the automation stack. It
+triages inbound ideas, validates intent, and prepares high-signal prompts that the downstream specialist agents can execute
+without ambiguity. To do that, the HIA works inside a constrained cockpit with two primary tools:
+
+- **Research Tool** – an interactive discovery workspace for interrogating markets, competitors, user interviews, and
+  feasibility checkpoints. The tool captures the raw question/answer stream, datasets, and intermediate reasoning so that
+  nothing is lost when insights are summarized later for stakeholders.
+- **Product Manager Tool** – a structured editor that the HIA activates once enough research exists to draft a Product
+  Requirements Document (PRD). It enforces required sections (problem, personas, success metrics, release gates, and risks),
+  ensures links back to the supporting research threads, and stages the narrative for stakeholder review before engineers are
+  tasked.
+
+#### `/research/` Raw Output Repository
+
+All unsummarized research transcripts produced by the Research Tool are persisted under `/research/`. Create a subfolder per
+initiative (e.g., `/research/<feature>/`) and drop timestamped markdown or JSON dumps that mirror the conversational logs,
+supporting datasets, and source citations. Do **not** edit or retroactively clean these files—treat them as immutable audit
+records. When starting a new investigation, consult the existing folders first, reference prior findings instead of duplicating
+work, and only reuse insights in design docs after they are distilled into stakeholder-ready prose with citations back to the
+raw material.
+
+### Product Requirements & Planning Flow
+
+Once discovery is saturated, the **Product Manager agent** (operating through the Product Manager Tool) orchestrates PRD
+creation. It pulls in highlights from `/research/`, frames the problem statement, anchors success metrics, and records release
+criteria plus rollout considerations. The approved PRD becomes the contract that informs both human reviewers and the planner.
+
+The **Planner Agent** ingests the finalized PRD alongside design contributions, decomposes them into a dependency-ordered task
+DAG inside `plan.json`, and annotates each node with codex-ready instructions. When Integration kicks off, the n8n Manager
+agent reads those tasks and hands them to the codex-powered Implementor agent, ensuring each unit of work carries the
+context, acceptance criteria, and research links required for autonomous execution.
 
 **AI Dev Tasks** is a schema-first, orchestrator-driven framework that turns a feature idea into deployed code through four phases:
 
