@@ -8,6 +8,7 @@
 | Path | Responsibilities |
 | --- | --- |
 | `docs/prompts/` | Prompt templates for design, planning, integration, and CD agents. Update these after copying the repo. |
+| `research/` | Stores raw, unsummarized findings gathered during discovery work. |
 | `design/` | Human design docs (`docs/<feature>.md`), machine artifacts (`*.json`), and planning files like `plan.json` and `dependencies.json`. |
 | `specs/` | JSON schemas that every artifact must validate against. |
 | `cd/` | Deployment plans (`release.json`). |
@@ -38,4 +39,7 @@ A feature branch with one commit per task and green CI, accompanied by validated
 
 ## 8. References
 - `README.md` – detailed workflow guide and FAQ.
-- `product-manager-agent*.gpt5.md` – operating principles for the Product Manager agent.
+- `docs/prompts/product-manager-agent.gpt5.md` – operating principles for the Product Manager agent.
+- `docs/prompts/human-interface-agent.gpt5.md` – guidance for the Human Interface agent.
+
+**Runtime contexts:** design and deployment prompts (e.g., `docs/prompts/design.*.gpt5.md`, `docs/prompts/cd.*.gpt5.md`, plus the product manager and human interface prompts) run in **n8n**, while coding and review prompts (`docs/prompts/integration.*.gpt5.md`) run in **codex**.
