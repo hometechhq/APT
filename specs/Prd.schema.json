@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Product Requirements Document",
+  "description": "Schema for the structured PRD artifact that captures goals, requirements, acceptance criteria, and risks.",
+  "type": "object",
+  "required": [
+    "title",
+    "goals",
+    "requirements",
+    "acceptance",
+    "risks"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human readable title for the product requirements document."
+    },
+    "goals": {
+      "type": "array",
+      "description": "Strategic or customer outcomes the PRD is intended to accomplish.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "statement"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            "description": "Stable identifier for referencing this goal in downstream planning artifacts."
+          },
+          "statement": {
+            "type": "string",
+            "description": "Short description of the desired outcome or customer benefit."
+          },
+          "metric": {
+            "type": "string",
+            "description": "How success for this goal will be measured."
+          },
+          "target": {
+            "type": "string",
+            "description": "Quantitative or qualitative target associated with the metric."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "primary",
+              "secondary",
+              "optional"
+            ],
+            "description": "Relative importance of the goal."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "description": "Functional and non-functional requirements necessary to satisfy the goals.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "category",
+          "priority"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            "description": "Stable identifier for the requirement (used by acceptance criteria and planning)."
+          },
+          "description": {
+            "type": "string",
+            "description": "Narrative description of the capability or constraint."
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "functional",
+              "non_functional",
+              "constraint",
+              "compliance",
+              "ux",
+              "analytics",
+              "other"
+            ],
+            "description": "Classification that indicates the nature of the requirement."
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "must_have",
+              "should_have",
+              "could_have",
+              "wont_have"
+            ],
+            "description": "Priority using the MoSCoW scale."
+          },
+          "goal_links": {
+            "type": "array",
+            "description": "Goal identifiers that this requirement supports.",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,32}$"
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Context explaining why the requirement exists."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional considerations such as design direction or sequencing guidance."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "acceptance": {
+      "type": "array",
+      "description": "Acceptance criteria that confirm a requirement has been met.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "requirement_id",
+          "criteria"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            "description": "Unique identifier for the acceptance criterion."
+          },
+          "requirement_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            "description": "Identifier of the requirement that this criterion verifies."
+          },
+          "criteria": {
+            "type": "string",
+            "description": "Clear, testable statement of how to verify the requirement is satisfied."
+          },
+          "verification": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automated",
+              "analysis",
+              "demo",
+              "other"
+            ],
+            "description": "Primary method used to confirm the criterion."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Person or role accountable for validating the criterion."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional guidance or links to supporting evidence."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "risks": {
+      "type": "array",
+      "description": "Risks that could block delivery or reduce the value of the PRD.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "description",
+          "likelihood",
+          "impact"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,32}$",
+            "description": "Stable identifier for tracking the risk."
+          },
+          "description": {
+            "type": "string",
+            "description": "Summary of the risk condition."
+          },
+          "likelihood": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Probability of the risk materializing."
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "description": "Severity of the risk if it occurs."
+          },
+          "mitigation": {
+            "type": "string",
+            "description": "Plan to reduce likelihood or impact."
+          },
+          "owner": {
+            "type": "string",
+            "description": "Person or team responsible for managing the risk."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "mitigating",
+              "closed",
+              "accepted"
+            ],
+            "description": "Current tracking status."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional context or related follow-ups."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
