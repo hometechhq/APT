@@ -7,6 +7,7 @@
 - `design/` - human design docs and machine artifacts
 - `cd/` - deployment plans
 - `docs/runs/` - audit snapshots of completed runs
+- `research/` - prior research notes and history logs (searchable via `scripts/query-research.mjs`)
 - `state/` - runtime state (gitignored)
 
 **AI Dev Tasks** is a schema-first, orchestrator-driven framework that turns a feature idea into deployed code through four phases:
@@ -797,8 +798,12 @@ These approvals are documented in both the human docs and the corresponding mach
 This section shows how to go from a raw feature idea to production using AI Dev Tasks.
 
 ### Step 1 — Start with an Idea
-- A human requester describes the feature or product idea.  
-- Example: *“Add email login with optional 2FA”*.  
+- A human requester describes the feature or product idea.
+- Example: *“Add email login with optional 2FA”*.
+- Before commissioning new analysis, run `node scripts/query-research.mjs "<query>"` to scan `/research/` for similar prior work.
+  - `--limit` (or `RESEARCH_SNIPPET_LIMIT`) tunes how many matching lines per file are shown.
+  - Add `--case-sensitive` for exact casing or `--json` to emit structured matches for automation.
+  - Capture refresh events in artifacts that validate against `specs/research-history.schema.json` so analysts know what’s current.
 
 ### Step 2 — Run the Design Phase
 - Open `/docs/planning/TEAM.chat.md` in ChatGPT.  
