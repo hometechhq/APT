@@ -52,7 +52,7 @@
               "name": { "type": "string" },
               "methods": {
                 "type": "array",
-                "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] }
+                "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] }
               },
               "payload_examples": { "type": "object", "additionalProperties": true },
               "sla": { "type": "string" }
