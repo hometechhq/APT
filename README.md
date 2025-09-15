@@ -579,7 +579,7 @@ Agents **plan** in JSON; n8n **executes** side effects and maintains state.
 ### 8.1 Responsibilities of n8n
 
 - **Design Phase**
-  - Hosts prompt templates for ChatGPT sessions (under `/docs/planning/`).
+  - Hosts prompt templates for codex sessions (under `/docs/prompts/`).
   - Collects outputs into `/design/` and does not perform side effects beyond storing artifacts.
 
 - **Dependency Prep Phase**
@@ -696,7 +696,7 @@ The orchestrator (n8n) is the only component that actually executes commands, wr
 
 - **File edits**  
   - Agents propose changes in a `ReturnEnvelope` (diff + files + hashes).  
-  - Orchestrator applies changes using `tools/apply-envelope.mjs`.  
+  - Orchestrator applies changes using its `apply-envelope.mjs` helper.
   - Path allowlists and SHA256 verification prevent unsafe writes.
 
 - **Git operations**  
@@ -705,22 +705,22 @@ The orchestrator (n8n) is the only component that actually executes commands, wr
 
 - **Tests & CI**  
   - Agents specify tests in JSON (`ReturnEnvelope.tests`, `ReleasePlan.tests`).  
-  - Orchestrator runs them via `tools/run-tests.mjs` or CI workflows.  
+  - Orchestrator runs them via its `run-tests.mjs` helper or CI workflows.
   - Results are written back into `TestReports`.
 
 - **Deployments**  
   - Agents define a DeployEnvelope.  
-  - Orchestrator runs `tools/deploy.mjs` or Helm/Kubectl commands.  
+  - Orchestrator runs its `deploy.mjs` helper or Helm/Kubectl commands.
   - All steps are logged and outputs stored under `/state/cd/`.
 
 - **Database changes**  
   - Agents emit `DBChangeEnvelope`.  
-  - Orchestrator runs `tools/backup-db.mjs` before migrations and `tools/migrate-db.mjs` for changes.  
+  - Orchestrator runs its `backup-db.mjs` helper before migrations and `migrate-db.mjs` for changes.
   - Rollbacks are performed with the provided `down` commands.
 
 - **Health checks**  
   - Defined in `ReleasePlan.health`.  
-  - Orchestrator executes `tools/healthcheck.mjs`, writing results into each DeployEnvelope.
+  - Orchestrator executes its `healthcheck.mjs` helper, writing results into each DeployEnvelope.
 
 ### 9.2 Human Boundaries
 
@@ -816,8 +816,8 @@ This section shows how to go from a raw feature idea to production using AI Dev 
 - Example: *“Add email login with optional 2FA”*.  
 
 ### Step 2 — Run the Design Phase
-- Open `/docs/planning/TEAM.chat.md` in ChatGPT.  
-- Work through each design agent prompt (Research, Backend, Frontend, Architect, Identity, Data Flow, Planner).  
+- In codex, start with [`docs/prompts/product-manager-agent.gpt5.md`](docs/prompts/product-manager-agent.gpt5.md) to capture the kickoff brief and success metrics.
+- Continue through the design prompts under `/docs/prompts/` for the Research Analyst, Backend Designer, Frontend Designer, Architect, Identity Designer, Data Flow, and Planner agents.
 - After each module:  
   - Save the **human doc section** to `/design/docs/<feature>.md`.  
   - Save the **JSON artifact** to `/design/<module>.json`.  
@@ -834,7 +834,7 @@ This section shows how to go from a raw feature idea to production using AI Dev 
 **Result:** `/design/dependencies.json` is complete and committed.
 
 ### Step 4 — Run Integration (n8n)
-- Import the Integration workflow (`/docs/planning/USAGE-n8n.md`) into n8n.  
+- Load the Integration workflow in n8n and seed the Manager, Implementor, and Reviewer nodes with the prompts under `/docs/prompts/integration.*`.
 - Configure environment variables:  
   - `REPO_DIR` → absolute path to the project repo.  
   - `GIT_BRANCH` → feature branch name (e.g., `feat/login-2fa`).  
@@ -856,7 +856,7 @@ This section shows how to go from a raw feature idea to production using AI Dev 
 **Result:** `/cd/release.json` committed.
 
 ### Step 6 — Run Deployment (n8n CD)
-- Import the CD workflow (`/docs/cd/USAGE-CD.md`) into n8n.  
+- Configure the CD workflow in n8n using the prompts under `/docs/prompts/cd.*` for the Manager, Deployer, DBA, Tester, and SRE Reviewer agents.
 - Trigger deployment. n8n will:  
   - CD Manager → select next environment.  
   - Deployer → produce DeployEnvelope.  
@@ -914,7 +914,7 @@ A: Yes. Tasks and environments include a `routing` field (`nano | mini | pro`).
 
 **Q: How do we avoid agents doing unsafe things?**  
 A: Agents **never execute side effects directly**. They only emit JSON artifacts that validate against strict schemas.  
-n8n executes side effects via controlled scripts in `/tools/` with path allowlists, timeouts, and logging.  
+n8n executes side effects via controlled automation helpers (e.g., `apply-envelope.mjs`, `run-tests.mjs`) with path allowlists, timeouts, and logging.
 Examples:  
 - `apply-envelope.mjs` safely applies file changes.  
 - `run-tests.mjs` executes test suites.  
@@ -969,7 +969,7 @@ A:
 **Q: How do we extend this system?**  
 A:  
 - Add new schema definitions under `/specs/`.  
-- Add prompt templates under `/docs/planning/` or `/docs/cd/`.  
-- Extend tooling in `/tools/` with safe wrappers.  
+- Add prompt templates under `/docs/prompts/` for codex and n8n agents.
+- Extend automation helpers in your orchestrator workspace (or add scripts under `/scripts/`) with safe wrappers.
 - Update CI workflows in `/.github/workflows/`.  
 All extensions must preserve schema-first, orchestrator-driven, and auditability principles.
