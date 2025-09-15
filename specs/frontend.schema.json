@@ -51,20 +51,7 @@
         "model": { "type": "string", "enum": ["topnav", "sidebar", "tabbar", "hybrid"] },
         "routes": {
           "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["path", "title", "auth_required", "children"],
-            "properties": {
-              "path": { "type": "string" },
-              "title": { "type": "string" },
-              "auth_required": { "type": "boolean" },
-              "children": {
-                "type": "array",
-                "items": { "$ref": "#/definitions/route" }
-              }
-            },
-            "additionalProperties": false
-          }
+          "items": { "$ref": "#/definitions/route" }
         }
       },
       "additionalProperties": false
