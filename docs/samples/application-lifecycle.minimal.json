@@ -1,0 +1,20 @@
+{
+  "application_id": "minimal-bundle",
+  "version": "2024.05.01",
+  "assembled_at": "2024-05-02T08:00:00Z",
+  "description": "Skeleton bundle demonstrating the minimal shape required by application.schema.json.",
+  "design": null,
+  "integration": {
+    "return_envelopes": []
+  },
+  "release": {
+    "plan": null,
+    "status": "draft"
+  },
+  "operations": {
+    "deployments": [],
+    "db_changes": [],
+    "test_reports": [],
+    "notes": "Awaiting deployment kick-off."
+  }
+}

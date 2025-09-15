@@ -1,0 +1,209 @@
+{
+  "application_id": "sample-feature",
+  "version": "1.0.0",
+  "assembled_at": "2024-05-01T12:00:00Z",
+  "description": "End-to-end lifecycle bundle used for documentation and validation examples.",
+  "links": [
+    "https://status.example.com/sample-feature"
+  ],
+  "design": {
+    "assembled_at": "2024-04-30T15:30:00Z",
+    "research": null,
+    "backend": null,
+    "frontend": null,
+    "identity": null,
+    "architecture": null,
+    "dataflow": null,
+    "plan": null,
+    "dependencies": null
+  },
+  "integration": {
+    "return_envelopes": [
+      {
+        "task_id": "task-001",
+        "summary": "Implement feature skeleton",
+        "patch_strategy": "atomic",
+        "changes": [
+          {
+            "path": "src/app.js",
+            "action": "modify",
+            "before_sha256": "prev-sha",
+            "after_sha256": "next-sha",
+            "patch": "---sample diff---"
+          }
+        ],
+        "run_checks": [
+          "npm test"
+        ],
+        "notes": "Initial implementation of the feature skeleton.",
+        "budget_report": {
+          "calls_used": 3,
+          "usd_estimate": 0.45,
+          "within_budget": true
+        },
+        "no_op": false
+      }
+    ],
+    "reviews": [
+      {
+        "task_id": "task-001",
+        "verdict": "pass",
+        "errors": [],
+        "retry_suggested": false,
+        "escalate": false,
+        "logs": [
+          "All acceptance criteria satisfied."
+        ]
+      }
+    ],
+    "handoff_events": [
+      {
+        "event": "agent_completed",
+        "agent": "implementor",
+        "feature_id": "sample-feature",
+        "artifact": "/design/plan.json",
+        "sha": "abc123",
+        "ts": "2024-04-30T15:45:00Z"
+      }
+    ]
+  },
+  "release": {
+    "plan": {
+      "release_id": "sample-release",
+      "version": "2024.05.01",
+      "created_at": "2024-04-29T09:00:00Z",
+      "environments": [
+        {
+          "name": "dev",
+          "strategy": "rolling",
+          "hold_for_approval": false,
+          "tests": [
+            "unit",
+            "integration"
+          ],
+          "health": {
+            "checks": [
+              "curl https://sample-dev.internal/health"
+            ],
+            "error_budget_minutes": 15
+          },
+          "db_changes": [
+            "db-migration-001"
+          ]
+        },
+        {
+          "name": "prod",
+          "strategy": "blue_green",
+          "hold_for_approval": true,
+          "tests": [
+            "smoke"
+          ],
+          "health": {
+            "checks": [
+              "curl https://sample-prod.internal/health"
+            ],
+            "error_budget_minutes": 5
+          },
+          "db_changes": []
+        }
+      ]
+    },
+    "status": "in_progress",
+    "approved_by": "Product Lead"
+  },
+  "operations": {
+    "deployments": [
+      {
+        "env": "dev",
+        "strategy": "rolling",
+        "commands": [
+          "helm upgrade sample-app ./charts/sample-app --namespace dev"
+        ],
+        "health_checks": [
+          "curl https://sample-dev.internal/health"
+        ],
+        "rollback": {
+          "commands": [
+            "helm rollback sample-app"
+          ],
+          "verification": [
+            "curl https://sample-dev.internal/health"
+          ]
+        },
+        "notes": "Deployed build 1.0.0 to dev."
+      },
+      {
+        "env": "prod",
+        "strategy": "blue_green",
+        "commands": [
+          "helm upgrade sample-app ./charts/sample-app --namespace prod"
+        ],
+        "health_checks": [
+          "curl https://sample-prod.internal/health"
+        ],
+        "rollback": {
+          "commands": [
+            "helm rollback sample-app"
+          ],
+          "verification": [
+            "curl https://sample-prod.internal/health"
+          ]
+        },
+        "notes": "Staged blue/green cutover prepared."
+      }
+    ],
+    "db_changes": [
+      {
+        "env": "dev",
+        "before_version": "2024.04.20",
+        "after_version": "2024.04.30",
+        "backup": {
+          "location": "s3://backups/sample-feature/dev/2024-04-30.sql",
+          "created_at": "2024-04-30T10:00:00Z",
+          "verified": true
+        },
+        "migrations": [
+          {
+            "id": "001-add-table",
+            "description": "Create table for new feature",
+            "status": "applied",
+            "logs": "Applied successfully"
+          }
+        ],
+        "rollback": {
+          "commands": [
+            "psql -f rollback/001.sql"
+          ],
+          "verification": [
+            "SELECT COUNT(*) FROM new_table;"
+          ]
+        },
+        "notes": "No issues during dev migration."
+      }
+    ],
+    "test_reports": [
+      {
+        "env": "dev",
+        "suite": "integration",
+        "command": "npm run test:integration",
+        "status": "passed",
+        "stats": {
+          "passed": 120,
+          "failed": 0,
+          "skipped": 2
+        },
+        "logs": [
+          "All integration tests passed."
+        ],
+        "artifacts": [
+          "s3://artifacts/sample-feature/dev/integration-report.html"
+        ]
+      }
+    ],
+    "notes": "Promotion to dev succeeded; prod queued for approval.",
+    "incidents": []
+  },
+  "attachments": [
+    "docs/runs/sample-feature/summary.md"
+  ]
+}

@@ -855,11 +855,17 @@ This section shows how to go from a raw feature idea to production using AI Dev 
 **Result:** Artifact safely promoted through dev → test → stage → prod.
 
 ### Step 7 — Audit and Snapshot
-- Runtime artifacts live under `/state/` while runs are active.  
-- Run `/scripts/gc-runs.mjs` to prune old states once complete.  
+- Runtime artifacts live under `/state/` while runs are active.
+- Run `/scripts/gc-runs.mjs` to prune old states once complete.
 - Commit durable snapshots into `/docs/runs/<feature>/` for audit.
 
 **Result:** Clean repo state and permanent audit trail.
+
+### Application Lifecycle Bundles
+- `specs/application.schema.json` defines the canonical top-level bundle that stitches together design, integration, release, and operations artifacts for a feature run.
+- The schema references `design.schema.json`, `ReturnEnvelope.schema.json`, `review.schema.json`, `handoff-event.schema.json`, `ReleasePlan.schema.json`, `DeployEnvelope.schema.json`, `DBChangeEnvelope.schema.json`, and `TestReport.schema.json` so orchestration can validate the complete story end-to-end.
+- Sample bundles live in `docs/samples/application-lifecycle.example.json` (full run) and `docs/samples/application-lifecycle.minimal.json` (skeleton payload).
+- Validate any generated bundle with your preferred JSON Schema tool, e.g. `python -m jsonschema -i docs/samples/application-lifecycle.example.json specs/application.schema.json` after installing the `jsonschema` package.
 
 ---
 
