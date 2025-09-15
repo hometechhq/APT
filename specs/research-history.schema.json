@@ -1,0 +1,156 @@
+{
+  "$schema": "http://json-schema.org/draft/2020-12/schema",
+  "title": "Research History Index",
+  "description": "Catalog of previously captured research artifacts with provenance and validity windows for reuse across runs.",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "entries"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp indicating when this index was last regenerated."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional instructions for how to interpret or update this history index."
+    },
+    "entries": {
+      "type": "array",
+      "description": "Individual research captures with their provenance and validity windows.",
+      "items": {
+        "type": "object",
+        "required": [
+          "feature_slug",
+          "captured_at",
+          "source",
+          "validity"
+        ],
+        "properties": {
+          "feature_slug": {
+            "type": "string",
+            "description": "Slug identifying the feature or initiative the research supports.",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+          },
+          "captured_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the underlying research artifact was created."
+          },
+          "source": {
+            "type": "object",
+            "description": "Pointer to the underlying research artifact.",
+            "required": [
+              "path"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Repository-relative path to the research artifact."
+              },
+              "type": {
+                "type": "string",
+                "description": "Classification of the referenced artifact.",
+                "enum": [
+                  "raw",
+                  "summary",
+                  "analysis",
+                  "external",
+                  "other"
+                ]
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Resolvable link to the artifact when it lives outside this repository."
+              },
+              "hash": {
+                "type": "string",
+                "description": "Optional checksum of the referenced artifact for integrity checks."
+              },
+              "notes": {
+                "type": "string",
+                "description": "Additional context on how to retrieve or interpret the source."
+              }
+            },
+            "additionalProperties": false
+          },
+          "validity": {
+            "type": "object",
+            "description": "Window describing how long the research can be relied upon before refreshing.",
+            "required": [
+              "start"
+            ],
+            "properties": {
+              "start": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp when the research became valid for reuse."
+              },
+              "end": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp after which the research should be considered stale."
+              },
+              "confidence": {
+                "type": "string",
+                "description": "Optional qualitative confidence rating in the validity window.",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high"
+                ]
+              },
+              "refresh_conditions": {
+                "type": "string",
+                "description": "Signals or events that should trigger a new research sweep."
+              }
+            },
+            "additionalProperties": false
+          },
+          "summary": {
+            "type": "string",
+            "description": "Short description of the findings contained in the research artifact."
+          },
+          "topics": {
+            "type": "array",
+            "description": "Key subjects covered by the research artifact.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "description": "Searchable keywords or labels assigned to this capture.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "related_features": {
+            "type": "array",
+            "description": "Other feature slugs that can reuse this research.",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+            }
+          },
+          "supersedes": {
+            "type": "array",
+            "description": "Paths or identifiers of older research artifacts replaced by this entry.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Operational notes for future analysts about this capture."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

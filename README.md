@@ -33,6 +33,16 @@ records. When starting a new investigation, consult the existing folders first, 
 work, and only reuse insights in design docs after they are distilled into stakeholder-ready prose with citations back to the
 raw material.
 
+To make those sweeps discoverable, maintain lightweight history indexes alongside the raw transcripts. Store them as `*.history.json` files (for example `/research/history/onboarding.history.json`) and validate each document against [`specs/research-history.schema.json`](specs/research-history.schema.json). Every entry captures the `feature_slug`, when the source was collected, where to find it (`source.path` or `source.url`), and a `validity` window so agents know when the data becomes stale. Use `summary`, `topics`, and `tags` to speed up scanning, and update `supersedes` when a new capture replaces an older one.
+
+Agents can query the accumulated history before launching a new sweep:
+
+```sh
+node scripts/query-research.mjs --feature onboarding --on 2024-06-01T00:00:00Z
+```
+
+The script walks `/research/` for `*.history.json` files, filters by feature/date, and prints the matching entries as JSON so downstream tasks can link directly to reusable findings. Combine `--from` / `--to` to narrow by capture date or omit all filters to list the entire archive.
+
 ### Product Requirements & Planning Flow
 
 Once discovery is saturated, the **Product Manager agent** (operating through the Product Manager Tool) orchestrates PRD
