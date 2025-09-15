@@ -22,7 +22,8 @@
   "properties": {
     "feature_id": {
       "type": "string",
-      "description": "Unique slug for the feature/product being researched"
+      "description": "Unique slug for the feature/product being researched",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
     },
     "version": { "type": "string" },
     "created_at": { "type": "string", "format": "date-time" },
