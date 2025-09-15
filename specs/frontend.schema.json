@@ -158,7 +158,7 @@
       "properties": {
         "cached": { "type": "array", "items": { "type": "string" } },
         "derived": { "type": "array", "items": { "type": "string" } },
-        "persistence": { "type": "string", "enum": ["none", "local", "indexdb"] },
+        "persistence": { "type": "string", "enum": ["none", "local", "indexeddb"] },
         "sync_rules": { "type": "array", "items": { "type": "string" } }
       },
       "additionalProperties": false
