@@ -5,9 +5,22 @@
 ### Repository Structure
 
 - `design/` - human design docs and machine artifacts
+- `research/` - raw research transcripts, notes, and evidence captured before synthesis
 - `cd/` - deployment plans
 - `docs/runs/` - audit snapshots of completed runs
 - `state/` - runtime state (gitignored)
+
+### Orchestrators & Agent Placement
+
+Two orchestrators collaborate throughout the workflow:
+
+- **codex** hosts the conversational discovery agents: Product Manager, Research Analyst, Backend Designer, Frontend Designer, Identity Designer, Architect, Data Flow, and Planner. These agents interview stakeholders, refine scope, and produce design artifacts before implementation starts.
+- **n8n** runs the deterministic automation loops: Docs Assembler, Design Reviewer, Integration Manager, Implementor, Reviewer, and the CD suite (Manager, Deployer, DBA, Tester, SRE Reviewer). n8n applies file diffs, executes CI/CD, and persists run state.
+
+| Orchestrator | Agents |
+| --- | --- |
+| codex | Product Manager, Research Analyst, Backend Designer, Frontend Designer, Identity Designer, Architect, Data Flow, Planner |
+| n8n | Docs Assembler, Design Reviewer, Integration Manager, Implementor, Reviewer, CD Manager, CD Deployer, DBA, Tester, SRE Reviewer |
 
 **AI Dev Tasks** is a schema-first, orchestrator-driven framework that turns a feature idea into deployed code through four phases:
 
@@ -16,7 +29,10 @@
      - **Human-oriented spec sections** → appended to `/design/docs/<feature>.md` for stakeholders.  
      - **Machine-oriented artifacts** → `/design/*.json`, validated against `/specs/*.schema.json`, for automation.  
    - **Agents and responsibilities:**
-     - **Research Analyst Agent** → *Product Research & Prospectus*: market, competitors, TAM/SAM/SOM, pricing, **cost-to-deliver**, **margin projections**.  
+    - **Product Manager Agent** → *Product Brief & Success Metrics*: executive summary, personas, success metrics, release guardrails, and in/out-of-scope notes to anchor the run.
+       - Human: executive summary and personas/JTBD sections appended to `/design/docs/<feature>.md`.
+       - AI: structured kickoff brief shared inside codex for downstream agents.
+    - **Research Analyst Agent** → *Product Research & Prospectus*: market, competitors, TAM/SAM/SOM, pricing, **cost-to-deliver**, **margin projections**.
        - Human: prospectus narrative.  
        - AI: `research.json`.  
      - **Backend Designer Agent** → *Backend Design*: processing flows, data models, APIs, storage/scaling trade-offs.  

@@ -8,6 +8,7 @@
 | Path | Responsibilities |
 | --- | --- |
 | `docs/prompts/` | Prompt templates for design, planning, integration, and CD agents. Update these after copying the repo. |
+| `/research/` | Raw research artifacts (transcripts, notes, source dumps) captured before synthesis into design docs. |
 | `design/` | Human design docs (`docs/<feature>.md`), machine artifacts (`*.json`), and planning files like `plan.json` and `dependencies.json`. |
 | `specs/` | JSON schemas that every artifact must validate against. |
 | `cd/` | Deployment plans (`release.json`). |
@@ -38,4 +39,4 @@ A feature branch with one commit per task and green CI, accompanied by validated
 
 ## 8. References
 - `README.md` – detailed workflow guide and FAQ.
-- `product-manager-agent*.gpt5.md` – operating principles for the Product Manager agent.
+- [`docs/prompts/product-manager-agent.gpt5.md`](docs/prompts/product-manager-agent.gpt5.md) – operating principles for the Product Manager agent.
