@@ -1,42 +1,42 @@
 {
   "$schema": "http://json-schema.org/draft/2020-12/schema",
-  "title": "Research History",
-  "description": "Historical log of research refresh events and their source data for a feature.",
+  "title": "Feature Research History",
+  "description": "Chronological record of when research for a feature was captured and how long each snapshot stays valid.",
   "type": "object",
-  "required": ["feature_id", "entries"],
+  "required": ["feature_slug", "entries"],
   "properties": {
-    "feature_id": {
+    "feature_slug": {
       "type": "string",
-      "description": "Unique slug for the feature or product that the research applies to.",
-      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+      "description": "Slug identifying the feature these research notes belong to.",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
-    "generated_at": {
+    "updated_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Timestamp when this research history file was generated."
+      "description": "Timestamp when this file was last refreshed."
     },
     "entries": {
       "type": "array",
       "minItems": 1,
-      "description": "Chronological list of research refresh events that analysts can reference before running new studies.",
+      "description": "Historical snapshots analysts can reference before running new research.",
       "items": {
         "type": "object",
-        "required": [
-          "recorded_at",
-          "data_source",
-          "valid_from"
-        ],
+        "required": ["captured_at", "data_source", "valid"],
         "properties": {
-          "recorded_at": {
+          "captured_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When this research snapshot or finding was captured."
+            "description": "When this research snapshot was recorded."
           },
           "data_source": {
             "type": "object",
-            "required": ["name"],
-            "description": "Metadata about where the research insight originated.",
+            "required": ["label"],
+            "description": "Where the research insight originated.",
             "properties": {
+              "label": {
+                "type": "string",
+                "description": "Human-readable source name, report title, or interview group."
+              },
               "type": {
                 "type": "string",
                 "description": "Classification of the data source.",
@@ -45,54 +45,41 @@
                   "customer_interview",
                   "market_report",
                   "public_dataset",
-                  "vendor",
                   "experiment",
                   "other"
                 ]
               },
-              "name": {
-                "type": "string",
-                "description": "Human-readable name of the data source, report, or interviewee group."
-              },
               "uri": {
                 "type": "string",
                 "format": "uri",
-                "description": "Link to the source document or dataset when available."
-              },
-              "notes": {
-                "type": "string",
-                "description": "Additional context about how the data was collected or prepared."
+                "description": "Link to supporting material when available."
               }
             },
             "additionalProperties": false
           },
-          "summary": {
-            "type": "string",
-            "description": "Key findings or themes captured during this research event."
-          },
-          "valid_from": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Timestamp when the findings became reliable or applicable."
-          },
-          "valid_until": {
-            "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
-            ],
-            "description": "Optional timestamp that bounds when the findings stop being reliable. Leave null when still valid."
-          },
-          "confidence": {
-            "type": "string",
-            "enum": ["low", "medium", "high"],
-            "description": "Subjective confidence rating for this research snapshot."
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
+          "valid": {
+            "type": "object",
+            "required": ["from"],
+            "description": "Validity window for this research snapshot.",
+            "properties": {
+              "from": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp when the findings became reliable."
+              },
+              "until": {
+                "anyOf": [
+                  { "type": "string", "format": "date-time" },
+                  { "type": "null" }
+                ],
+                "description": "Optional timestamp when the findings expire. Use null while still valid."
+              }
             },
-            "description": "Searchable keywords that help analysts locate related research quickly."
+            "additionalProperties": false
+          },
+          "notes": {
+            "type": "string",
+            "description": "Short summary or pointers for future analysts."
           }
         },
         "additionalProperties": false

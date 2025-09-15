@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -9,56 +9,62 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 const researchDir = path.join(repoRoot, 'research');
 
-const DEFAULT_LIMIT = parseInt(process.env.RESEARCH_SNIPPET_LIMIT || '3', 10);
-const MAX_FILE_BYTES = parseInt(process.env.RESEARCH_MAX_FILE_BYTES || String(2 * 1024 * 1024), 10);
-
-const options = {
-  limit: Number.isFinite(DEFAULT_LIMIT) ? DEFAULT_LIMIT : 3,
-  caseSensitive: false,
-  json: false
-};
-
-const positional = [];
 const rawArgs = process.argv.slice(2);
+
+function usage() {
+  console.log(`Usage: node scripts/query-research.mjs <query> [--limit N] [--case-sensitive] [--json]\n\n` +
+    'Search the /research/ directory for lines that mention the query.');
+}
+
+let limit = parseInt(process.env.RESEARCH_SNIPPET_LIMIT || '3', 10);
+if (!Number.isFinite(limit) || limit <= 0) limit = 3;
+let caseSensitive = false;
+let outputJson = false;
+
+const terms = [];
 for (let i = 0; i < rawArgs.length; i += 1) {
   const arg = rawArgs[i];
   switch (arg) {
+    case '--help':
+    case '-h':
+      usage();
+      process.exit(0);
+      break;
     case '--limit':
     case '-l': {
       const value = rawArgs[i + 1];
-      if (value && !value.startsWith('--')) {
-        const parsed = parseInt(value, 10);
-        if (!Number.isNaN(parsed) && parsed > 0) {
-          options.limit = parsed;
-        }
-        i += 1;
+      if (!value || value.startsWith('-')) {
+        console.error('Missing value after --limit');
+        process.exit(1);
       }
+      const parsed = parseInt(value, 10);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        console.error('Limit must be a positive integer.');
+        process.exit(1);
+      }
+      limit = parsed;
+      i += 1;
       break;
     }
     case '--case-sensitive':
-    case '--cs': {
-      options.caseSensitive = true;
+    case '--cs':
+      caseSensitive = true;
       break;
-    }
-    case '--json': {
-      options.json = true;
+    case '--json':
+      outputJson = true;
       break;
-    }
-    default: {
-      positional.push(arg);
-      break;
-    }
+    default:
+      terms.push(arg);
   }
 }
 
-const query = positional.join(' ').trim();
-
+const query = terms.join(' ').trim();
 if (!query) {
-  printUsage();
+  usage();
   process.exit(1);
 }
 
-const needle = options.caseSensitive ? query : query.toLowerCase();
+const needle = caseSensitive ? query : query.toLowerCase();
 
 async function listFiles(dir) {
   let entries;
@@ -74,12 +80,12 @@ async function listFiles(dir) {
   const files = [];
   for (const entry of entries) {
     if (entry.name.startsWith('.')) continue;
-    const fullPath = path.join(dir, entry.name);
+    const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      const nested = await listFiles(fullPath);
+      const nested = await listFiles(full);
       files.push(...nested);
     } else {
-      files.push(fullPath);
+      files.push(full);
     }
   }
   return files;
@@ -90,14 +96,12 @@ async function scanFile(filePath) {
   try {
     stat = await fs.stat(filePath);
   } catch (err) {
-    if (err.code === 'ENOENT') return null;
+    if (err.code === 'ENOENT') return { skipped: true, reason: 'file removed before scanning' };
     throw err;
   }
 
-  if (stat.size > MAX_FILE_BYTES) {
+  if (stat.size > (2 * 1024 * 1024)) {
     return {
-      path: path.relative(repoRoot, filePath),
-      matches: [],
       skipped: true,
       reason: `skipped (size ${(stat.size / (1024 * 1024)).toFixed(2)} MiB exceeds limit)`
     };
@@ -107,24 +111,16 @@ async function scanFile(filePath) {
   try {
     content = await fs.readFile(filePath, 'utf8');
   } catch (err) {
-    return {
-      path: path.relative(repoRoot, filePath),
-      matches: [],
-      skipped: true,
-      reason: `skipped (unable to read as utf8: ${err.message})`
-    };
+    return { skipped: true, reason: `skipped (unable to read as utf8: ${err.message})` };
   }
 
   const matches = [];
   const lines = content.split(/\r?\n/);
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
-    const haystack = options.caseSensitive ? line : line.toLowerCase();
+    const haystack = caseSensitive ? line : line.toLowerCase();
     if (haystack.includes(needle)) {
-      matches.push({
-        line: i + 1,
-        text: line.trim()
-      });
+      matches.push({ line: i + 1, text: line.trim() });
     }
   }
 
@@ -135,47 +131,47 @@ async function scanFile(filePath) {
   return {
     path: path.relative(repoRoot, filePath),
     matches,
-    skipped: false,
-    mtime: stat.mtime.toISOString()
+    mtime: stat.mtime.toISOString(),
+    skipped: false
   };
 }
 
 async function main() {
   const files = await listFiles(researchDir);
   if (files.length === 0) {
-    console.error(`No research documents found under ${path.relative(repoRoot, researchDir) || '.'}`);
+    console.error('No research documents found under /research/.');
     process.exit(1);
   }
 
   const results = [];
   const skipped = [];
+
   for (const file of files) {
     const result = await scanFile(file);
     if (!result) continue;
     if (result.skipped) {
-      skipped.push(result);
+      skipped.push({ path: path.relative(repoRoot, file), reason: result.reason });
     } else {
       results.push(result);
     }
   }
 
-  if (options.json) {
-    const payload = { query, options, results, skipped };
-    console.log(JSON.stringify(payload, null, 2));
+  if (outputJson) {
+    console.log(JSON.stringify({ query, options: { limit, caseSensitive }, results, skipped }, null, 2));
     process.exit(results.length > 0 ? 0 : 1);
   }
 
   if (results.length === 0) {
-    console.error(`No matches for "${query}" in ${path.relative(repoRoot, researchDir) || '.'}`);
+    console.error(`No matches for "${query}" in /research/.`);
   } else {
     for (const result of results) {
       console.log(`${result.path} (last updated ${result.mtime})`);
-      const toShow = result.matches.slice(0, options.limit);
-      for (const match of toShow) {
+      const shown = result.matches.slice(0, limit);
+      for (const match of shown) {
         console.log(`  L${match.line}: ${match.text}`);
       }
-      if (result.matches.length > options.limit) {
-        const remaining = result.matches.length - options.limit;
+      if (result.matches.length > limit) {
+        const remaining = result.matches.length - limit;
         console.log(`  ... ${remaining} more match${remaining === 1 ? '' : 'es'} in this file`);
       }
       console.log('');
@@ -192,13 +188,8 @@ async function main() {
   process.exit(results.length > 0 ? 0 : 1);
 }
 
-function printUsage() {
-  console.log(`Usage: node scripts/query-research.mjs <query> [--limit N] [--case-sensitive] [--json]\n\n` +
-    'Searches the /research/ directory for lines matching the query.\n' +
-    'Quote multi-word queries to keep them together.');
-}
-
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
