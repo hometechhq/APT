@@ -4,13 +4,15 @@
 ```mermaid
 flowchart LR
     HI[Human Interface Agent] --> RT[Research Tool]
-    RT --> PM[Product Manager]
+    HI --> PM[Product Manager]
+    PM --> RT
     PM --> ARCH[Architect Designer]
     PM --> FE[Frontend Designer]
     PM --> BE[Backend Designer]
     PM --> DATA[Dataflow Agent]
     PM --> ID[Identity Designer]
     PM --> DOCS[Docs Assembler]
+    PM --> PL[Planner]
     ARCH --> PL[Planner]
     FE --> PL
     BE --> PL
@@ -23,17 +25,17 @@ flowchart LR
 
 ### Human Interface Agent
 - **Expected input:** Raw stakeholder goals, constraints, and clarifying questions gathered from the requestor.
-- **Expected output:** Structured design brief with objectives, success criteria, and open research questions handed to the research tool.
+- **Expected output:** Structured design brief with objectives, success criteria, and open research questions, coordinating with the research and product manager peers as needed.
 - **Prompt template:** [`docs/prompts/human-interface-agent.gpt5.md`](../prompts/human-interface-agent.gpt5.md)
 
 ### Research Tool
-- **Expected input:** Design brief plus outstanding questions that require market, technical, or dependency investigation.
-- **Expected output:** Curated findings, references, and risk flags that unblock the product manager.
+- **Expected input:** Design brief plus outstanding questions that require market, technical, or dependency investigation from either the human interface agent or the product manager.
+- **Expected output:** Curated findings, references, and risk flags published for the product manager and human interface agent to consume and iterate on.
 - **Prompt template:** [`docs/prompts/design.research-analyst.gpt5.md`](../prompts/design.research-analyst.gpt5.md)
 
 ### Product Manager
-- **Expected input:** Research pack and clarified stakeholder goals from the human interface.
-- **Expected output:** Prioritized problem statement, acceptance criteria, and task routing for each specialist design agent.
+- **Expected input:** Research pack and clarified stakeholder goals from the human interface agent, along with iterative updates retrieved from the research tool when invoked as a peer.
+- **Expected output:** Prioritized problem statement, acceptance criteria, and task routing for each specialist design agent, plus a finalized design package handed to the planner to break the feature into ChatGPT Codex-ready tasks. Acts as the orchestrator, calling the research peer and design specialists as tools when further detail is required.
 - **Prompt template:** [`docs/prompts/product-manager-agent.gpt5.md`](../prompts/product-manager-agent.gpt5.md)
 
 ### Design Specialist Agents
@@ -63,6 +65,6 @@ flowchart LR
   - **Prompt template:** [`docs/prompts/design.docs-assembler.gpt5.md`](../prompts/design.docs-assembler.gpt5.md)
 
 ### Planner
-- **Expected input:** Finalized specialist outputs with traceable assumptions and dependencies.
-- **Expected output:** Structured implementation plan, milestone sequencing, and task envelopes for integration.
+- **Expected input:** Finalized specialist outputs with traceable assumptions and dependencies, including the consolidated package from the product manager.
+- **Expected output:** Structured implementation plan, milestone sequencing, and task envelopes for integration, breaking the feature into actionable work that is ready for execution by ChatGPT Codex.
 - **Prompt template:** [`docs/prompts/design.planner.gpt5.md`](../prompts/design.planner.gpt5.md)
