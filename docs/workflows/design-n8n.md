@@ -1,5 +1,7 @@
 # n8n Design Workflow
 
+Canonical JSON template: [`templates/design-n8n.json`](templates/design-n8n.json)
+
 ## Flow Overview
 ```mermaid
 flowchart LR
