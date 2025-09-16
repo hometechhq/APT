@@ -1,5 +1,7 @@
 # n8n Deployment Workflow
 
+Canonical JSON template: [`templates/deployment-n8n.json`](templates/deployment-n8n.json)
+
 ## Flow Overview
 ```mermaid
 flowchart LR

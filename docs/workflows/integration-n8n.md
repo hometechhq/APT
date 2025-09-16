@@ -1,5 +1,7 @@
 # n8n Integration Workflow
 
+Canonical JSON template: [`templates/integration-n8n.json`](templates/integration-n8n.json)
+
 ## Flow Overview
 ```mermaid
 flowchart LR
